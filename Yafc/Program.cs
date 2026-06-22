@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Serilog;
 using Yafc.I18n;
 using Yafc.Model;
@@ -10,6 +11,9 @@ namespace Yafc;
 
 public static class Program {
     private static readonly ILogger logger = Logging.GetLogger(typeof(Program));
+    private const string MacKoreanSystemFont = "/System/Library/Fonts/AppleSDGothicNeo.ttc";
+    private const int MacKoreanSystemFontRegularFace = 0;
+    private const int MacKoreanSystemFontLightFace = 8;
     internal static bool hasOverriddenFont { get; private set; }
 
     private static void Main(string[] args) {
@@ -46,16 +50,22 @@ public static class Program {
             Console.Error.WriteException(ex);
         }
 
+        FontFile? headerFontFile = overriddenFontFile;
+        FontFile? regularFontFile = overriddenFontFile;
         string baseFileName = "Roboto";
-        if (WelcomeScreen.languageMapping.TryGetValue(Preferences.Instance.language, out LanguageInfo? language)) {
-            if (Font.FilesExist(language.BaseFontName)) {
+        if (WelcomeScreen.languageMapping.TryGetValue(preferences.language, out LanguageInfo? language)) {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && preferences.language == "ko" && File.Exists(MacKoreanSystemFont)) {
+                headerFontFile ??= new FontFile(MacKoreanSystemFont, MacKoreanSystemFontLightFace);
+                regularFontFile ??= new FontFile(MacKoreanSystemFont, MacKoreanSystemFontRegularFace);
+            }
+            else if (Font.FilesExist(language.BaseFontName)) {
                 baseFileName = language.BaseFontName;
             }
         }
 
         hasOverriddenFont = overriddenFontFile != null;
-        Font.header = new Font(overriddenFontFile ?? new FontFile($"Data/{baseFileName}-Light.ttf"), 2f);
-        var regular = overriddenFontFile ?? new FontFile($"Data/{baseFileName}-Regular.ttf");
+        Font.header = new Font(headerFontFile ?? new FontFile($"Data/{baseFileName}-Light.ttf"), 2f);
+        var regular = regularFontFile ?? new FontFile($"Data/{baseFileName}-Regular.ttf");
         Font.subheader = new Font(regular, 1.5f);
         Font.productionTableHeader = new Font(regular, 1.23f);
         Font.text = new Font(regular, 1f);

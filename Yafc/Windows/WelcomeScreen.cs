@@ -62,7 +62,6 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
     private DefinesUpdateState definesUpdateState;
     private string? errorMessage;
     private string? tip;
-    private readonly string[] tips;
     private bool useMostRecentSave = true;
 
     private enum DefinesUpdateState {
@@ -128,8 +127,6 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
     }
 
     public WelcomeScreen(ProjectDefinition? cliProject = null) : base(ImGuiUtils.DefaultScreenPadding) {
-        tips = File.ReadAllLines("Data/Tips.txt");
-
         IconCollection.ClearCustomIcons();
         RenderingUtils.SetColorScheme(Preferences.Instance.darkMode);
 
@@ -323,6 +320,12 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
             }
             return false;
         }
+    }
+
+    private static string[] LoadTips() {
+        string localizedTipsPath = Path.Combine("Data", "locale", Preferences.Instance.language, "Tips.txt");
+        string tipsPath = File.Exists(localizedTipsPath) ? localizedTipsPath : Path.Combine("Data", "Tips.txt");
+        return [.. File.ReadAllLines(tipsPath).Select(InputSystem.FormatPrimaryModifierText)];
     }
 
     private void ProjectErrorMoreInfo(ImGui gui) {
@@ -559,6 +562,7 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
             var (dataPath, modsPath, projectPath) = (this.dataPath, this.modsPath, path);
             Preferences.Instance.AddProject(dataPath, modsPath, projectPath, expensive, netProduction);
             Preferences.Instance.Save();
+            string[] tips = LoadTips();
             tip = tips.Length > 0 ? tips[DataUtils.random.Next(tips.Length)] : "";
 
             loading = true;
