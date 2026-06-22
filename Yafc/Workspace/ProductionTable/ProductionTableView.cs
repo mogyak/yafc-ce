@@ -286,7 +286,7 @@ goodsHaveNoProduction:;
         /// </summary>
         /// <param name="table">The table that will receive the new recipes or technologies, if any are selected</param>
         private static void BuildRecipeButtons(ImGui gui, ProductionTable table) {
-            if (gui.BuildButton(LSs.ProductionTableAddRawRecipe).WithTooltip(gui, LSs.ProductionTableAddTechnologyHint) && gui.CloseDropdown()) {
+            if (gui.BuildButton(LSs.ProductionTableAddRawRecipe).WithTooltip(gui, InputSystem.FormatPrimaryModifierText(LSs.ProductionTableAddTechnologyHint)) && gui.CloseDropdown()) {
                 if (InputSystem.Instance.control) {
                     SelectMultiObjectPanel.Select(Database.technologies.all, new(LSs.ProductionTableAddTechnology, Multiple: true,
                         Checkmark: table.Contains, YellowMark: table.ContainsAnywhere),
@@ -1112,7 +1112,7 @@ goodsHaveNoProduction:;
             }
 
             if (numberOfShownRecipes > 1) {
-                gui.BuildText(LSs.ProductionTableAddMultipleHint, TextBlockDisplayStyle.HintText);
+                gui.BuildText(InputSystem.FormatPrimaryModifierText(LSs.ProductionTableAddMultipleHint), TextBlockDisplayStyle.HintText);
             }
             #endregion
 

@@ -261,13 +261,13 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
                 gui.ShowDropDown(gui.lastRect, MainDropdown, new Padding(0f, 0f, 0f, 0.5f));
             }
 
-            if (gui.BuildButton(Icon.Plus).WithTooltip(gui, LSs.CreateProductionSheet.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_T)))) {
+            if (gui.BuildButton(Icon.Plus).WithTooltip(gui, InputSystem.FormatPrimaryModifierText(LSs.CreateProductionSheet.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_T))))) {
 
                 ProductionTableView.CreateProductionSheet();
             }
 
             gui.allocator = RectAllocator.RightRow;
-            if (gui.BuildButton(Icon.DropDown, SchemeColor.None, SchemeColor.Grey).WithTooltip(gui, LSs.ListAndSearchAll.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_F))) || showSearchAll) {
+            if (gui.BuildButton(Icon.DropDown, SchemeColor.None, SchemeColor.Grey).WithTooltip(gui, InputSystem.FormatPrimaryModifierText(LSs.ListAndSearchAll.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_F)))) || showSearchAll) {
                 showSearchAll = false;
                 updatePageList();
                 ShowDropDown(gui, gui.lastRect, missingPagesDropdown, new Padding(0f, 0f, 0f, 0.5f), 30f);
@@ -380,11 +380,11 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
 
     private void MainDropdown(ImGui gui) {
         gui.boxColor = SchemeColor.Background;
-        if (gui.BuildContextMenuButton(LSs.Undo, LSs.ShortcutCtrlX.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_Z)), disabled: !project.undo.CanUndo) && gui.CloseDropdown()) {
+        if (gui.BuildContextMenuButton(LSs.Undo, InputSystem.FormatPrimaryShortcut(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_Z)), disabled: !project.undo.CanUndo) && gui.CloseDropdown()) {
             project.undo.PerformUndo();
         }
 
-        if (gui.BuildContextMenuButton(LSs.Save, LSs.ShortcutCtrlX.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_S)), disabled: project.unsavedChangesCount == 0) && gui.CloseDropdown()) {
+        if (gui.BuildContextMenuButton(LSs.Save, InputSystem.FormatPrimaryShortcut(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_S)), disabled: project.unsavedChangesCount == 0) && gui.CloseDropdown()) {
             SaveProject().CaptureException();
         }
 
@@ -392,7 +392,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
             SaveProjectAs().CaptureException();
         }
 
-        if (gui.BuildContextMenuButton(LSs.FindOnPage, LSs.ShortcutCtrlX.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_F))) && gui.CloseDropdown()) {
+        if (gui.BuildContextMenuButton(LSs.FindOnPage, InputSystem.FormatPrimaryShortcut(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_F))) && gui.CloseDropdown()) {
             ShowSearch();
         }
 
@@ -421,7 +421,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
             ProjectPageSettingsPanel.Show(null, (name, icon) => Instance.AddProjectPage(name, icon, typeof(ProductionSummary), true, true));
         }
 
-        if (gui.BuildContextMenuButton(LSs.Neie, LSs.ShortcutCtrlX.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_N))) && gui.CloseDropdown()) {
+        if (gui.BuildContextMenuButton(LSs.Neie, InputSystem.FormatPrimaryShortcut(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_N))) && gui.CloseDropdown()) {
             ShowNeie();
         }
 
@@ -598,7 +598,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
     }
 
     public bool KeyDown(SDL.SDL_Keysym key) {
-        bool ctrl = (key.mod & SDL.SDL_Keymod.KMOD_CTRL) != 0;
+        bool ctrl = InputSystem.IsPrimaryModifier(key.mod);
         bool shift = (key.mod & SDL.SDL_Keymod.KMOD_SHIFT) != 0;
         if (ctrl) {
             switch (key.scancode) {

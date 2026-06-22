@@ -470,10 +470,10 @@ public static class ImmediateWidgets {
 
         if (options.Multiple && !options.AllowMultipleWithoutControl) {
             if (drawCentered) {
-                gui.BuildText(LSs.SelectMultipleObjectsHint, TextBlockDisplayStyle.HintText with { Alignment = RectAlignment.Middle });
+                gui.BuildText(InputSystem.FormatPrimaryModifierText(LSs.SelectMultipleObjectsHint), TextBlockDisplayStyle.HintText with { Alignment = RectAlignment.Middle });
             }
             else {
-                gui.BuildText(LSs.SelectMultipleObjectsHint, TextBlockDisplayStyle.HintText);
+                gui.BuildText(InputSystem.FormatPrimaryModifierText(LSs.SelectMultipleObjectsHint), TextBlockDisplayStyle.HintText);
             }
         }
 

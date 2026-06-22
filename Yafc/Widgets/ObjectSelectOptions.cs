@@ -50,7 +50,7 @@ public record ObjectSelectOptions<T>(string? Header, [AllowNull] IComparer<T> Or
 /// list, after the item's name. Not used when displaying <see cref="SelectObjectPanel{TResult, TDisplay}"/>s.</param>
 /// <param name="AllowMultipleWithoutControl">When this and <paramref name="Multiple"/> are both <see langword="true"/>, the quality icons in the
 /// selection list will always behave like checkboxes. When <paramref name="Multiple"/> is <see langword="true"/> and this is
-/// <see langword="false"/>, the quality icons will behave like checkboxes when ctrl-clicking, and like radio buttons when clicking without
+/// <see langword="false"/>, the quality icons will behave like checkboxes when primary-modifier-clicking, and like radio buttons when clicking without
 /// control. When <paramref name="Multiple"/> is <see langword="false"/>, the quality icons will always behave like radio buttons.</param>
 /// <param name="SelectedQuality">The initially selected <see cref="Quality"/>. If this parameter is <see langword="null"/> and
 /// <paramref name="Multiple"/> is <see langword="false"/>, <see cref="SelectedQuality"/> will be initialized to <see cref="Quality.Normal"/>.

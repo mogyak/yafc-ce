@@ -11,7 +11,7 @@ namespace Yafc;
 
 /// <summary>
 /// The location(s) where <see cref="ObjectTooltip"/> should display hints
-/// (currently only "ctrl+click to add recipe" hints)
+/// (currently only primary-modifier-click to add recipe hints)
 /// </summary>
 [Flags]
 public enum HintLocations {
@@ -20,11 +20,11 @@ public enum HintLocations {
     /// </summary>
     None = 0,
     /// <summary>
-    /// Display the ctrl+click recipe-selection hint associated with recipes that produce this <see cref="Goods"/>.
+    /// Display the primary-modifier-click recipe-selection hint associated with recipes that produce this <see cref="Goods"/>.
     /// </summary>
     OnProducingRecipes = 1,
     /// <summary>
-    /// Display the ctrl+click recipe-selection hint associated with recipes that consume this <see cref="Goods"/>.
+    /// Display the primary-modifier-click recipe-selection hint associated with recipes that consume this <see cref="Goods"/>.
     /// </summary>
     OnConsumingRecipes = 2,
     // NOTE: This is [Flags]. The next item, if applicable, should be 4.
@@ -375,7 +375,7 @@ doneDrawing:;
                 BuildIconRow(gui, goods.production, 2);
                 if (tooltipOptions.HintLocations.HasFlag(HintLocations.OnProducingRecipes)) {
                     _ = goods.production.SelectSingle(out string recipeTip);
-                    gui.BuildText(recipeTip, TextBlockDisplayStyle.HintText);
+                    gui.BuildText(InputSystem.FormatPrimaryModifierText(recipeTip), TextBlockDisplayStyle.HintText);
                 }
             }
         }
@@ -393,7 +393,7 @@ doneDrawing:;
                 BuildIconRow(gui, goods.usages, 4);
                 if (tooltipOptions.HintLocations.HasFlag(HintLocations.OnConsumingRecipes)) {
                     _ = goods.usages.SelectSingle(out string recipeTip);
-                    gui.BuildText(recipeTip, TextBlockDisplayStyle.HintText);
+                    gui.BuildText(InputSystem.FormatPrimaryModifierText(recipeTip), TextBlockDisplayStyle.HintText);
                 }
             }
         }
