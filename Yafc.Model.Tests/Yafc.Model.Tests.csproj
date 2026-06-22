@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <NativeLibraryRuntimeIdentifier Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</NativeLibraryRuntimeIdentifier>
+    <NativeLibraryRuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</NativeLibraryRuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,15 +22,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ContentWithTargetPath Include="..\Yafc\lib\windows\lua*" Condition="('$(RuntimeIdentifier)' == 'win-x64') Or ('$(OS)' == 'Windows_NT')">
+    <ContentWithTargetPath Include="..\Yafc\lib\windows\*lua*" Condition="('$(NativeLibraryRuntimeIdentifier)' == 'win-x64') Or ('$(OS)' == 'Windows_NT')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="..\Yafc\lib\osx\lua*" Condition="'$(RuntimeIdentifier)' == 'osx-x64'">
+    <ContentWithTargetPath Include="..\Yafc\lib\osx\*lua*" Condition="'$(NativeLibraryRuntimeIdentifier)' == 'osx-x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="..\Yafc\lib\linux\lua*" Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+    <ContentWithTargetPath Include="..\Yafc\lib\osx-arm64\*lua*" Condition="'$(NativeLibraryRuntimeIdentifier)' == 'osx-arm64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>%(Filename)%(Extension)</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="..\Yafc\lib\linux\*lua*" Condition="'$(NativeLibraryRuntimeIdentifier)' == 'linux-x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </ContentWithTargetPath>
