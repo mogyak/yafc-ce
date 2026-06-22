@@ -158,6 +158,8 @@ public sealed class InputSystem {
             return;
         }
 
+        Update();
+
         if (button == SDL.SDL_BUTTON_LEFT) {
             if (activeKeyboardFocus != null) {
                 SetKeyboardFocus(null);
