@@ -17,6 +17,8 @@ public static class Program {
     internal static bool hasOverriddenFont { get; private set; }
 
     private static void Main(string[] args) {
+        SetWorkingDirectoryForAppBundle();
+
         YafcLib.RegisterDefaultAnalysis();
 
         // Wire up the UI-aware undo batch scheduler so that undo batches are committed on gesture-finish
@@ -87,6 +89,19 @@ public static class Program {
         else {
             _ = new WelcomeScreen(cliProject);
             Ui.MainLoop();
+        }
+    }
+
+    private static void SetWorkingDirectoryForAppBundle() {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+            return;
+        }
+
+        string baseDirectory = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
+        string appBundleMacOsDirectory = $"{Path.DirectorySeparatorChar}Contents{Path.DirectorySeparatorChar}MacOS";
+        if (baseDirectory.EndsWith(appBundleMacOsDirectory, StringComparison.Ordinal)
+            && Directory.Exists(Path.Combine(baseDirectory, "Data"))) {
+            Directory.SetCurrentDirectory(baseDirectory);
         }
     }
 }
