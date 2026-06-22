@@ -8,6 +8,7 @@ using SDL2;
 namespace Yafc.UI;
 
 public interface IKeyboardFocus {
+    bool AcceptsTextInput => false;
     bool KeyDown(SDL.SDL_Keysym key);
     bool TextInput(string input);
     bool TextEditing(string input, int start, int length) => false;
@@ -59,13 +60,17 @@ public sealed class InputSystem {
         currentKeyboardFocus?.FocusChanged(false);
         activeKeyboardFocus = focus;
         currentKeyboardFocus?.FocusChanged(true);
+        UpdateTextInputState();
+    }
 
-        if (currentKeyboardFocus == null) {
+    private void UpdateTextInputState() {
+        if (activeKeyboardFocus?.AcceptsTextInput != true) {
             SDL.SDL_StopTextInput();
+
+            return;
         }
-        else {
-            SDL.SDL_StartTextInput();
-        }
+
+        SDL.SDL_StartTextInput();
     }
 
     public void SetMouseFocus(IMouseFocus? mouseFocus) {

@@ -7,6 +7,8 @@ using Yafc.Core;
 namespace Yafc.UI;
 
 internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
+    public bool AcceptsTextInput => true;
+
     private string prevText = "";
     private Rect prevRect;
     private string text = "";

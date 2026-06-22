@@ -21,6 +21,26 @@ public static class Program {
 
         YafcLib.RegisterDefaultAnalysis();
 
+        // This must happen before Preferences.Instance, where we load the prefs file and the requested translation.
+        FactorioDataSource.LoadYafcLocale("en");
+
+        ProjectDefinition? cliProject = CommandLineParser.ParseArgs(args);
+
+        if (CommandLineParser.errorOccured || CommandLineParser.helpRequested) {
+            Console.WriteLine(LSs.YafcWithVersion.L(YafcLib.version.ToString(3)));
+            Console.WriteLine();
+
+            if (CommandLineParser.errorOccured) {
+                Console.WriteLine(LSs.CommandLineError.L(CommandLineParser.lastError));
+                Console.WriteLine();
+                Environment.ExitCode = 1;
+            }
+
+            CommandLineParser.PrintHelp();
+
+            return;
+        }
+
         // Wire up the UI-aware undo batch scheduler so that undo batches are committed on gesture-finish
         // (mouse-up) rather than immediately. This must be set before any Project is loaded or created,
         // including any that Ui.Start() might trigger during initialization.
@@ -33,9 +53,6 @@ public static class Program {
             logger.Fatal(ex, "Failed to initialize the UI");
             throw;
         }
-
-        // This must happen before Preferences.Instance, where we load the prefs file and the requested translation.
-        FactorioDataSource.LoadYafcLocale("en");
 
         Preferences preferences = Preferences.Instance;
         Ui.SetInterfaceScale(preferences.interfaceScale);
@@ -72,24 +89,8 @@ public static class Program {
         Font.productionTableHeader = new Font(regular, 1.23f);
         Font.text = new Font(regular, 1f);
 
-        ProjectDefinition? cliProject = CommandLineParser.ParseArgs(args);
-
-        if (CommandLineParser.errorOccured || CommandLineParser.helpRequested) {
-            Console.WriteLine(LSs.YafcWithVersion.L(YafcLib.version.ToString(3)));
-            Console.WriteLine();
-
-            if (CommandLineParser.errorOccured) {
-                Console.WriteLine(LSs.CommandLineError.L(CommandLineParser.lastError));
-                Console.WriteLine();
-                Environment.ExitCode = 1;
-            }
-
-            CommandLineParser.PrintHelp();
-        }
-        else {
-            _ = new WelcomeScreen(cliProject);
-            Ui.MainLoop();
-        }
+        _ = new WelcomeScreen(cliProject);
+        Ui.MainLoop();
     }
 
     private static void SetWorkingDirectoryForAppBundle() {
