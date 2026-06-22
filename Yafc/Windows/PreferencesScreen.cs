@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Yafc.I18n;
 using Yafc.Model;
@@ -10,6 +11,7 @@ namespace Yafc;
 public class PreferencesScreen : PseudoScreen {
     private static readonly PreferencesScreen Instance = new PreferencesScreen();
     private const int GENERAL_PAGE = 0, PROGRESSION_PAGE = 1;
+    private const float MinimumInterfaceScale = 0.5f, MaximumInterfaceScale = 2f;
     private readonly TabControl tabControl;
 
     private PreferencesScreen() => tabControl = new((LSs.PreferencesTabGeneral, DrawGeneral), (LSs.PreferencesTabProgression, DrawProgression));
@@ -220,9 +222,9 @@ public class PreferencesScreen : PseudoScreen {
     internal static void BuildInterfaceScale(ImGui gui, bool rightJustifyHelpIcon = true) {
         using (gui.EnterRowWithHelpIcon(LSs.PrefsInterfaceScaleHint, rightJustifyHelpIcon)) {
             gui.BuildText(LSs.PrefsInterfaceScale, topOffset: 0.5f);
-            DisplayAmount amount = new(Preferences.Instance.interfaceScale, UnitOfMeasure.Percent);
-            if (gui.BuildFloatInput(amount, TextBoxDisplayStyle.DefaultTextInput)) {
-                float interfaceScale = Math.Clamp(amount.Value, 0.5f, 2f);
+            if (gui.BuildTextInput(FormatInterfaceScale(Preferences.Instance.interfaceScale), out string newScale, null, TextBoxDisplayStyle.DefaultTextInput, true)
+                && TryParseInterfaceScale(newScale, out float interfaceScale)) {
+                interfaceScale = Math.Clamp(interfaceScale, MinimumInterfaceScale, MaximumInterfaceScale);
                 if (MathF.Abs(interfaceScale - Preferences.Instance.interfaceScale) > 0.001f) {
                     Preferences.Instance.interfaceScale = interfaceScale;
                     Preferences.Instance.Save();
@@ -230,6 +232,24 @@ public class PreferencesScreen : PseudoScreen {
                 }
             }
         }
+    }
+
+    private static string FormatInterfaceScale(float interfaceScale) => (interfaceScale * 100f).ToString("0.###", CultureInfo.InvariantCulture) + "%";
+
+    private static bool TryParseInterfaceScale(string text, out float interfaceScale) {
+        text = text.Trim();
+        bool hasPercentSuffix = text.EndsWith('%');
+        if (hasPercentSuffix) {
+            text = text[..^1].TrimEnd();
+        }
+
+        if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float value)) {
+            interfaceScale = 0f;
+            return false;
+        }
+
+        interfaceScale = hasPercentSuffix || value > MaximumInterfaceScale ? value / 100f : value;
+        return true;
     }
 
     protected override void ReturnPressed() => Close();
