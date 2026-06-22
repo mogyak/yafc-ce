@@ -1,3 +1,5 @@
+This page is also available in [Korean](Fulgora%20lightning%20model.ko.md).
+
 This is the math used to calculate `requiredChargeMw` (called "_cap_" here) in `BuildAccumulatorView`.
 The first two equations are the starting point, and the remainder are solving for _cap_.
 

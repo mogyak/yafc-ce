@@ -1,5 +1,7 @@
 # How to build Yafc from sources
 
+[English](HowToBuild.md) | [한국어](HowToBuild.ko.md)
+
 - Download the sources,
 - Install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0),
 - Run `./build.sh` from the repository root to build all release targets,

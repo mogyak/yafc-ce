@@ -1,3 +1,5 @@
+This page is also available in [Korean](UndoRedo.ko.md).
+
 The Undo and Redo functionality has the following key use cases where it drastically improves a common operation:
 
 Key use case:

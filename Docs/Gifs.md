@@ -1,3 +1,7 @@
+# YAFC GIF examples
+
+[English](Gifs.md) | [한국어](Gifs.ko.md)
+
 ## Simple usage
 ![Simple usage](/Docs/Media/Main.gif)
 

@@ -45,8 +45,8 @@ YAFC is a desktop app. The Windows build is the most tested, but macOS and Linux
 1. Once YAFC is opened, locate your Factorio data and mod folders. Refer to the [Factorio application directory wiki](https://wiki.factorio.com/Application_directory#Locations) for OS-specific paths.
 
 We also have the following materials to improve your Yafc experience:
-* [Gifs](/Docs/Gifs.md) for the examples of different use cases, but beware that Gifs are traffic-heavy.  
-* [Tips and Tricks](/Docs/TipsAndTricks.md) and the [in-built tips](https://github.com/Yafc-CE/yafc-ce/blob/master/Yafc/Data/Tips.txt) for useful info.
+* [Gifs](/Docs/Gifs.md) for the examples of different use cases, but beware that Gifs are traffic-heavy.
+* [Tips and Tricks](/Docs/TipsAndTricks.md) and the [in-built tips](Yafc/Data/Tips.txt) for useful info.
 * [Shortcuts](/Docs/Shortcuts.md) for quality of life.
 
 If you want to build YAFC from source, install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0). You can run `./build.sh` from the repository root to build all release targets, or run one `dotnet publish` command for your platform:

@@ -1,4 +1,7 @@
 # Serialization system
+
+[English](Serialization.md) | [한국어](Serialization.ko.md)
+
 The project serialization system is somewhat fragile.
 It adapts properly to many changes, but can also fail silently.
 To reduce the chances of silent failures, it has some [guardrails in the tests](#guarding-tests), to ensure any relevant changes are intentional and functional.
