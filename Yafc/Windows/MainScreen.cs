@@ -727,6 +727,8 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
 
     public bool TextInput(string input) => true;
 
+    public bool TextEditing(string input, int start, int length) => true;
+
     public bool KeyUp(SDL.SDL_Keysym key) => true;
 
     public void FocusChanged(bool focused) { }

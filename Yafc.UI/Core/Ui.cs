@@ -148,6 +148,19 @@ public static partial class Ui {
                         }
 
                         break;
+                    case SDL.SDL_EventType.SDL_TEXTEDITING:
+                        unsafe {
+                            int term = 0;
+
+                            while (evt.edit.text[term] != 0) {
+                                ++term;
+                            }
+
+                            string inputString = new string((sbyte*)evt.edit.text, 0, term, Encoding.UTF8);
+                            inputSystem.TextEditing(inputString, evt.edit.start, evt.edit.length);
+                        }
+
+                        break;
                     case SDL.SDL_EventType.SDL_WINDOWEVENT:
                         if (!windows.TryGetValue(evt.window.windowID, out var window)) {
                             break;

@@ -10,6 +10,7 @@ namespace Yafc.UI;
 public interface IKeyboardFocus {
     bool KeyDown(SDL.SDL_Keysym key);
     bool TextInput(string input);
+    bool TextEditing(string input, int start, int length) => false;
     bool KeyUp(SDL.SDL_Keysym key);
     void FocusChanged(bool focused);
 }
@@ -58,6 +59,13 @@ public sealed class InputSystem {
         currentKeyboardFocus?.FocusChanged(false);
         activeKeyboardFocus = focus;
         currentKeyboardFocus?.FocusChanged(true);
+
+        if (currentKeyboardFocus == null) {
+            SDL.SDL_StopTextInput();
+        }
+        else {
+            SDL.SDL_StartTextInput();
+        }
     }
 
     public void SetMouseFocus(IMouseFocus? mouseFocus) {
@@ -112,6 +120,12 @@ public sealed class InputSystem {
     internal void TextInput(string input) {
         if (activeKeyboardFocus == null || !activeKeyboardFocus.TextInput(input)) {
             _ = (defaultKeyboardFocus?.TextInput(input));
+        }
+    }
+
+    internal void TextEditing(string input, int start, int length) {
+        if (activeKeyboardFocus == null || !activeKeyboardFocus.TextEditing(input, start, length)) {
+            _ = (defaultKeyboardFocus?.TextEditing(input, start, length));
         }
     }
 

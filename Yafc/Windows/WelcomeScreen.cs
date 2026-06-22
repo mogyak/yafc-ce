@@ -689,6 +689,7 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
         return false;
     }
     public bool TextInput(string input) => false;
+    public bool TextEditing(string input, int start, int length) => false;
     public bool KeyUp(SDL.SDL_Keysym key) => false;
     public void FocusChanged(bool focused) { }
 }

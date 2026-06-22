@@ -169,25 +169,25 @@ public partial class ImGui {
     }
 
     private ImGuiTextInputHelper? textInputHelper;
-    public bool BuildTextInput(string? text, out string newText, string? placeholder, Icon icon = Icon.None, bool delayed = false, SetKeyboardFocus setKeyboardFocus = SetKeyboardFocus.No) {
+    public bool BuildTextInput(string? text, out string newText, string? placeholder, Icon icon = Icon.None, bool delayed = false, SetKeyboardFocus setKeyboardFocus = SetKeyboardFocus.No, bool trimWhitespace = false) {
         TextBoxDisplayStyle displayStyle = TextBoxDisplayStyle.DefaultTextInput;
 
         if (icon != Icon.None) {
             displayStyle = displayStyle with { Icon = icon };
         }
 
-        return BuildTextInput(text, out newText, placeholder, displayStyle, delayed, setKeyboardFocus);
+        return BuildTextInput(text, out newText, placeholder, displayStyle, delayed, setKeyboardFocus, trimWhitespace);
     }
 
-    public bool BuildTextInput(string? text, out string newText, string? placeholder, TextBoxDisplayStyle displayStyle, bool delayed, SetKeyboardFocus setKeyboardFocus = SetKeyboardFocus.No) {
+    public bool BuildTextInput(string? text, out string newText, string? placeholder, TextBoxDisplayStyle displayStyle, bool delayed, SetKeyboardFocus setKeyboardFocus = SetKeyboardFocus.No, bool trimWhitespace = false) {
         if (setKeyboardFocus != SetKeyboardFocus.Always && textInputHelper != null) {
             setKeyboardFocus = SetKeyboardFocus.No;
         }
         textInputHelper ??= new ImGuiTextInputHelper(this);
-        bool result = textInputHelper.BuildTextInput(text, out newText, placeholder, GetFontSize(), delayed, displayStyle);
+        bool result = textInputHelper.BuildTextInput(text, out newText, placeholder, GetFontSize(), delayed, displayStyle, trimWhitespace);
 
         if (setKeyboardFocus != SetKeyboardFocus.No) {
-            SetTextInputFocus(lastRect, newText);
+            SetTextInputFocus(lastRect, newText, trimWhitespace);
         }
 
         return result;
@@ -400,10 +400,10 @@ public partial class ImGui {
 
     public bool IsLastMouseDown(Rect rect) => rect == mouseDownRect;
 
-    public void SetTextInputFocus(Rect rect, string text) {
+    public void SetTextInputFocus(Rect rect, string text, bool trimWhitespace = false) {
         if (textInputHelper != null && InputSystem.Instance.currentKeyboardFocus != textInputHelper) {
             Rebuild();
-            textInputHelper.SetFocus(rect, text);
+            textInputHelper.SetFocus(rect, text, trimWhitespace);
         }
     }
 }
