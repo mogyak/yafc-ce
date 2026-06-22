@@ -21,7 +21,7 @@ public class HeaderRowSettingsPanel : PseudoScreen {
     }
 
     private void Build(ImGui gui, Action<FactorioObject?> setIcon) {
-        _ = gui.BuildTextInput(description, out description, LSs.PageSettingsNameHint, setKeyboardFocus: editingRow == null ? SetKeyboardFocus.OnFirstPanelDraw : SetKeyboardFocus.No);
+        _ = gui.BuildTextInput(description, out description, LSs.PageSettingsNameHint, setKeyboardFocus: editingRow == null ? SetKeyboardFocus.OnFirstPanelDraw : SetKeyboardFocus.No, trimWhitespace: true);
         if (gui.BuildFactorioObjectButton(icon, new ButtonDisplayStyle(4f, MilestoneDisplay.None, SchemeColor.Grey) with { UseScaleSetting = false }) == Click.Left) {
             SelectSingleObjectPanel.Select(Database.objects.all, new(LSs.SelectIcon), setIcon);
         }

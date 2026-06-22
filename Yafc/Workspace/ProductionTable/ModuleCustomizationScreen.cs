@@ -53,7 +53,7 @@ public class ModuleCustomizationScreen : PseudoScreenWithResult<ModuleTemplateBu
                     });
                 }
 
-                if (gui.BuildTextInput(template.name, out string newName, LSs.ModuleCustomizationNameHint, delayed: true) && newName != "") {
+                if (gui.BuildTextInput(template.name, out string newName, LSs.ModuleCustomizationNameHint, delayed: true, trimWhitespace: true) && newName != "") {
                     template.RecordUndo().name = newName;
                 }
             }

@@ -46,7 +46,7 @@ public partial class MainScreen {
                     query = new SearchQuery(newQueryText);
                     updatePageList();
                 }
-                gui.SetTextInputFocus(gui.lastContentRect, query.query);
+                gui.SetTextInputFocus(gui.lastContentRect, query.query, trimWhitespace: true);
 
                 gui.BuildText(LSs.SearchAllHeader);
                 using (gui.EnterRow()) {
