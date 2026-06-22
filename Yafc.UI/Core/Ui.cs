@@ -12,8 +12,11 @@ namespace Yafc.UI;
 
 public static partial class Ui {
     private static readonly ILogger logger = Logging.GetLogger(typeof(Ui));
+    private const float MinimumInterfaceScale = 0.5f;
+    private const float MaximumInterfaceScale = 2f;
 
     public static bool quit { get; private set; }
+    internal static float interfaceScale { get; private set; } = 1f;
 
     private static readonly Dictionary<uint, Window> windows = [];
     internal static void RegisterWindow(uint id, Window window) => windows[id] = window;
@@ -60,6 +63,18 @@ public static partial class Ui {
             ProcessEvents();
             Render();
             Thread.Sleep(10);
+        }
+    }
+
+    public static void SetInterfaceScale(float scale) {
+        scale = Math.Clamp(scale, MinimumInterfaceScale, MaximumInterfaceScale);
+        if (MathF.Abs(interfaceScale - scale) < 0.001f) {
+            return;
+        }
+
+        interfaceScale = scale;
+        foreach (Window window in windows.Values) {
+            window.InterfaceScaleChanged();
         }
     }
 

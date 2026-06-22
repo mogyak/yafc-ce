@@ -279,6 +279,8 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
                 }
             }
 
+            PreferencesScreen.BuildInterfaceScale(gui, false);
+
             gui.spacing = 1.5f;
             using (gui.EnterRow()) {
                 if (Preferences.Instance.recentProjects.Length > 1) {
