@@ -39,6 +39,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
 
     private bool analysisUpdatePending;
     private SearchQuery pageSearch;
+    private bool pageSearchVisible;
     private readonly PageListSearch pageListSearch = new();
     private readonly ImGui searchGui;
     private Rect searchBoxRect;
@@ -304,7 +305,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
                 _activePageView.Build(gui, pageVisibleSize);
             }
 
-            if (pageSearch.query != null && gui.isBuilding) {
+            if (pageSearchVisible && gui.isBuilding) {
                 var searchSize = searchGui.CalculateState(30, gui.pixelsPerUnit);
                 gui.DrawPanel(new Rect(pageVisibleSize.X - searchSize.X, usedHeaderSpace, searchSize.X, searchSize.Y), searchGui);
             }
@@ -351,10 +352,17 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
     }
 
     private void ShowSearch() {
+        pageSearchVisible = true;
         SetSearch(new SearchQuery(""));
         if (searchBoxRect != default) {
             searchGui.SetTextInputFocus(searchBoxRect, "", trimWhitespace: true);
         }
+    }
+
+    private void HideSearch() {
+        pageSearchVisible = false;
+        searchBoxRect = default;
+        SetSearch(default);
     }
 
     private void BuildSearch(ImGui gui) {
@@ -362,7 +370,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
         gui.AllocateSpacing();
         gui.allocator = RectAllocator.RightRow;
         if (gui.BuildButton(Icon.Close)) {
-            SetSearch(default);
+            HideSearch();
             return;
         }
         string pageSearchText = pageSearch.query;
@@ -655,8 +663,8 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
             }
         }
 
-        if (key.scancode == SDL.SDL_Scancode.SDL_SCANCODE_ESCAPE && pageSearch.query != null) {
-            SetSearch(default);
+        if (key.scancode == SDL.SDL_Scancode.SDL_SCANCODE_ESCAPE && pageSearchVisible) {
+            HideSearch();
         }
 
         return true;
