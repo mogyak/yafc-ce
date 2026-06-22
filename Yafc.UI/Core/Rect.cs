@@ -41,7 +41,7 @@ public struct Rect(float x, float y, float width, float height) {
 
     public static Rect SideRect(Vector2 topLeft, Vector2 bottomRight) => SideRect(topLeft.X, bottomRight.X, topLeft.Y, bottomRight.Y);
 
-    public static Rect Union(Rect a, Rect b) => SideRect(MathF.Min(a.X, a.X), MathF.Max(a.Right, b.Right), MathF.Min(a.Y, b.Y), MathF.Max(a.Bottom, b.Bottom));
+    public static Rect Union(Rect a, Rect b) => SideRect(MathF.Min(a.X, b.X), MathF.Max(a.Right, b.Right), MathF.Min(a.Y, b.Y), MathF.Max(a.Bottom, b.Bottom));
 
     public Vector2 Size {
         readonly get => new Vector2(Width, Height);
