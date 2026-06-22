@@ -68,6 +68,19 @@ public abstract class WindowMain(Padding padding, bool forceSoftwareRenderer) : 
         base.WindowResize();
     }
 
+    protected internal override void InterfaceScaleChanged() {
+        base.InterfaceScaleChanged();
+        int minWidth = MathUtils.Round(85f * pixelsPerUnit);
+        int minHeight = MathUtils.Round(60f * pixelsPerUnit);
+        SDL.SDL_SetWindowMinimumSize(window, minWidth, minHeight);
+
+        SDL.SDL_GetWindowSize(window, out int windowWidth, out int windowHeight);
+        if (windowWidth < minWidth || windowHeight < minHeight) {
+            SDL.SDL_SetWindowSize(window, Math.Max(windowWidth, minWidth), Math.Max(windowHeight, minHeight));
+            WindowResize();
+        }
+    }
+
     protected bool IsMaximized {
         get {
             SDL.SDL_WindowFlags flags = (SDL.SDL_WindowFlags)SDL.SDL_GetWindowFlags(window);

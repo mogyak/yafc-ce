@@ -31,7 +31,10 @@ public static class Program {
         // This must happen before Preferences.Instance, where we load the prefs file and the requested translation.
         FactorioDataSource.LoadYafcLocale("en");
 
-        string? overrideFont = Preferences.Instance.overrideFont;
+        Preferences preferences = Preferences.Instance;
+        Ui.SetInterfaceScale(preferences.interfaceScale);
+
+        string? overrideFont = preferences.overrideFont;
         FontFile? overriddenFontFile = null;
 
         try {

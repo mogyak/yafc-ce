@@ -70,24 +70,29 @@ public abstract class Window : IDisposable {
         return icon;
     }
 
-    internal static int CalculateUnitsToPixels(int display) {
+    internal static float CalculateUnitsToPixels(int display) {
         _ = SDL.SDL_GetDisplayDPI(display, out float dpi, out _, out _);
         _ = SDL.SDL_GetDisplayBounds(display, out var rect);
         // 82x60 is the minimum screen size in units, plus some for borders
         // DPI bellow 96 is more likely to be incorrectly reported value than desired,
         //     see discussion in https://github.com/Yafc-CE/yafc-ce/issues/255#issuecomment-2508884418
         //     => we treat is as "unknown" and revert to default 100% scaling
-        int desiredUnitsToPixels = dpi < 96 ? 13 : MathUtils.Round(dpi / 6.8f);
+        float desiredUnitsToPixels = dpi < 96 ? 13 : dpi / 6.8f;
 
-        if (desiredUnitsToPixels * 82f >= rect.w) {
-            desiredUnitsToPixels = MathUtils.Floor(rect.w / 82f);
+        desiredUnitsToPixels = ClampUnitsToPixelsToDisplay(desiredUnitsToPixels, rect);
+        return ClampUnitsToPixelsToDisplay(desiredUnitsToPixels * Ui.interfaceScale, rect);
+    }
+
+    private static float ClampUnitsToPixelsToDisplay(float unitsToPixels, SDL.SDL_Rect displayBounds) {
+        if (unitsToPixels * 82f >= displayBounds.w) {
+            unitsToPixels = displayBounds.w / 82f;
         }
 
-        if (desiredUnitsToPixels * 65f >= rect.h) {
-            desiredUnitsToPixels = MathUtils.Floor(rect.h / 65f);
+        if (unitsToPixels * 65f >= displayBounds.h) {
+            unitsToPixels = displayBounds.h / 65f;
         }
 
-        return desiredUnitsToPixels;
+        return unitsToPixels;
     }
 
     protected internal void SetWindowTitle(string value) => SDL.SDL_SetWindowTitle(window, value);
@@ -98,18 +103,25 @@ public abstract class Window : IDisposable {
     }
 
     internal void WindowMoved() {
-        if (surface is null) { throw new InvalidOperationException($"surface must be set by a derived class before calling {nameof(WindowMoved)}."); }
+        UpdatePixelsPerUnit();
+    }
 
-        int index = SDL.SDL_GetWindowDisplayIndex(window);
-        int u2p = CalculateUnitsToPixels(index);
+    protected internal virtual void InterfaceScaleChanged() => UpdatePixelsPerUnit();
 
-        if (u2p != pixelsPerUnit) {
-            pixelsPerUnit = u2p;
-            surface.pixelsPerUnit = pixelsPerUnit;
-            repaintRequired = true;
-            rootGui.MarkEverythingForRebuild();
-            WindowResize();
+    protected void UpdatePixelsPerUnit() {
+        if (surface is null) { throw new InvalidOperationException($"surface must be set by a derived class before calling {nameof(UpdatePixelsPerUnit)}."); }
+
+        float unitsToPixels = CalculateUnitsToPixels(SDL.SDL_GetWindowDisplayIndex(window));
+
+        if (MathF.Abs(unitsToPixels - pixelsPerUnit) < 0.001f) {
+            return;
         }
+
+        pixelsPerUnit = unitsToPixels;
+        surface.pixelsPerUnit = pixelsPerUnit;
+        repaintRequired = true;
+        rootGui.MarkEverythingForRebuild();
+        WindowResize();
     }
 
     protected virtual void OnRepaint() { }

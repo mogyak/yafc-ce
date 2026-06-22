@@ -158,6 +158,8 @@ public class PreferencesScreen : PseudoScreen {
             }
         }
 
+        BuildInterfaceScale(gui);
+
         // Don't show this preference if it isn't relevant.
         // (Takes ~3ms for pY, which would concern me in the regular UI, but should be fine here.)
         if (Database.objects.all.Any(o => Milestones.Instance.GetMilestoneResult(o).PopCount() > 22)) {
@@ -212,6 +214,21 @@ public class PreferencesScreen : PseudoScreen {
 
         if (gui.BuildCheckBox(LSs.PrefsExportEntitiesWithFuelFilterSet, Preferences.Instance.exportEntitiesWithFuelFilter, out newValue)) {
             Preferences.Instance.exportEntitiesWithFuelFilter = newValue;
+        }
+    }
+
+    internal static void BuildInterfaceScale(ImGui gui, bool rightJustifyHelpIcon = true) {
+        using (gui.EnterRowWithHelpIcon(LSs.PrefsInterfaceScaleHint, rightJustifyHelpIcon)) {
+            gui.BuildText(LSs.PrefsInterfaceScale, topOffset: 0.5f);
+            DisplayAmount amount = new(Preferences.Instance.interfaceScale, UnitOfMeasure.Percent);
+            if (gui.BuildFloatInput(amount, TextBoxDisplayStyle.DefaultTextInput)) {
+                float interfaceScale = Math.Clamp(amount.Value, 0.5f, 2f);
+                if (MathF.Abs(interfaceScale - Preferences.Instance.interfaceScale) > 0.001f) {
+                    Preferences.Instance.interfaceScale = interfaceScale;
+                    Preferences.Instance.Save();
+                    Ui.SetInterfaceScale(interfaceScale);
+                }
+            }
         }
     }
 
