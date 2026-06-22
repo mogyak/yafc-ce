@@ -1,5 +1,7 @@
 # Yafc Code Style
 
+[English](CodeStyle.md) | [한국어](CodeStyle.ko.md)
+
 The Code Style describes the conventions that we use in the Yafc project.  
 For the ease of collective development, we ask you to follow the Code Style when contributing to Yafc.
 

@@ -1,10 +1,10 @@
-This page is also available in [Korean](Fulgora%20lightning%20model.ko.md).
+이 문서는 [영어](Fulgora%20lightning%20model.md)로도 볼 수 있습니다.
 
-This is the math used to calculate `requiredChargeMw` (called "_cap_" here) in `BuildAccumulatorView`.
-The first two equations are the starting point, and the remainder are solving for _cap_.
+이 문서는 `BuildAccumulatorView`에서 `requiredChargeMw`를 계산할 때 사용하는 수식을 설명합니다. 여기서는 이를 "_cap_"이라고 부릅니다.
+처음 두 식이 출발점이며, 나머지 식은 _cap_을 구하기 위한 전개입니다.
 
-_chargeTime_ is per lightning strike.
-_eff_ is the efficiency of the lightning attractor.
+_chargeTime_은 번개 한 번당 충전 시간입니다.
+_eff_는 번개 유인기의 효율입니다.
 
 $$chargeTime=\frac{1000MJ\times eff}{drain+cap+load}$$
 $$cap\times chargeTime\times numStrikes-load\times(stormTime-chargeTime\times numStrikes)=reqMj$$
