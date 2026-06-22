@@ -25,11 +25,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    # Install the .NET Core workload
-    - name: Install .NET Core
+    # Install the .NET SDK
+    - name: Install .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
 
     # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
     - name: Setup MSBuild.exe
