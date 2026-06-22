@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using SDL2;
 
 namespace Yafc.UI;
@@ -48,16 +50,20 @@ public class Font(FontFile file, float size) {
         => File.Exists($"Data/{baseFileName}-Regular.ttf") && File.Exists($"Data/{baseFileName}-Light.ttf");
 }
 
-public sealed class FontFile(string fileName) : IDisposable {
+public sealed partial class FontFile(string fileName, nint faceIndex = 0) : IDisposable {
     public readonly string fileName = fileName;
+    private readonly nint faceIndex = faceIndex;
     private readonly Dictionary<int, FontSize> sizes = [];
+
+    [LibraryImport("SDL2_ttf.dll", StringMarshalling = StringMarshalling.Utf8), UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+    private static partial IntPtr TTF_OpenFontIndex(string file, int ptsize, nint index);
 
     public class FontSize : UnmanagedResource {
         public readonly int size;
         public readonly int lineSize;
         public FontSize(FontFile font, int size) {
             this.size = size;
-            _handle = SDL_ttf.TTF_OpenFont(font.fileName, size);
+            _handle = font.faceIndex == 0 ? SDL_ttf.TTF_OpenFont(font.fileName, size) : TTF_OpenFontIndex(font.fileName, size, font.faceIndex);
             lineSize = SDL_ttf.TTF_FontLineSkip(_handle);
         }
 
