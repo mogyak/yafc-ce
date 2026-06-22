@@ -1,5 +1,6 @@
 <h1 align="center">YAFC: Community Edition</h1>
 <p align="center"><IMG style="width:50px; height:auto;" src="Yafc/image.ico" alt="yafc_icon.png"></p>
+<p align="center"><a href="README.md">English</a> | <a href="README.ko.md">한국어</a></p>
 
 ### Why new repo?
 The [original](https://github.com/ShadowTheAge/yafc) YAFC repository was inactive for a long time. Bugfixes piled up, but there was no one to merge them.  
@@ -28,22 +29,36 @@ YAFC also has its own Never Enough Items, which is FNEI on steroids. In addition
 
 ## Getting started
 
-YAFC is a desktop app. The Windows build is the most tested, but OSX and Linux are supported too. See [Linux and OSX installation instructions](/Docs/LinuxOsxInstall.md).
+YAFC is a desktop app. The Windows build is the most tested, but macOS and Linux are supported too. See [Linux and macOS installation instructions](/Docs/LinuxOsxInstall.md) for platform-specific dependencies and troubleshooting.
 
-1. Make sure that you have [VC Redist](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) installed. It's needed for Google OrTools.
-1. Navigate to the [Yafc Releases](https://github.com/Yafc-CE/yafc-ce/releases),
-1. Download the zip file for your given OS,
-1. Extract the zip file to your preferred location,
-1. Run either `./Yafc` or `./Yafc.exe` (OS-dependent),
-1. Once YAFC is opened, make sure to locate your mod folder. Refer to the [wiki](https://wiki.factorio.com/Application_directory#Locations) for your given OS.
+1. Navigate to the [YAFC releases](https://github.com/Yafc-CE/yafc-ce/releases).
+1. Download the archive for your OS and CPU architecture:
+    - Windows: `Yafc-CE-Windows-<version>.zip`, or the self-contained Windows archive if you do not want to install .NET separately.
+    - macOS Apple Silicon: `Yafc-CE-OSX-arm64-<version>.tar.gz`.
+    - macOS Intel: `Yafc-CE-OSX-intel-<version>.tar.gz`.
+    - Linux: `Yafc-CE-Linux-self-contained-<version>.tar.gz` for the simplest setup, or `Yafc-CE-Linux-<version>.tar.gz` if you already have the .NET 10 runtime installed.
+1. Install the required runtime dependencies:
+    - Windows: install the latest [VC Redist](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170), which is needed for Google OrTools.
+    - macOS and Linux: follow [Linux and macOS installation instructions](/Docs/LinuxOsxInstall.md).
+1. Extract the archive to your preferred location.
+1. Run either `./Yafc` or `./Yafc.exe` depending on your OS.
+1. Once YAFC is opened, locate your Factorio data and mod folders. Refer to the [Factorio application directory wiki](https://wiki.factorio.com/Application_directory#Locations) for OS-specific paths.
 
 We also have the following materials to improve your Yafc experience:
 * [Gifs](/Docs/Gifs.md) for the examples of different use cases, but beware that Gifs are traffic-heavy.  
 * [Tips and Tricks](/Docs/TipsAndTricks.md) and the [in-built tips](https://github.com/Yafc-CE/yafc-ce/blob/master/Yafc/Data/Tips.txt) for useful info.
 * [Shortcuts](/Docs/Shortcuts.md) for quality of life.
 
-If you want to build Yafc from source, you need to install [.NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).  
-You can run `build.sh` with [Git Bash](https://git-scm.com/downloads) to build for all systems, or just a single line from it that contains `dotnet publish` to build for your system.
+If you want to build YAFC from source, install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0). You can run `./build.sh` from the repository root to build all release targets, or run one `dotnet publish` command for your platform:
+
+```sh
+dotnet publish Yafc/Yafc.csproj -r linux-x64 -c Release -o Build/Linux
+dotnet publish Yafc/Yafc.csproj -r osx-arm64 -c Release -o Build/OSX-arm64
+dotnet publish Yafc/Yafc.csproj -r osx-x64 -c Release -o Build/OSX
+dotnet publish Yafc/Yafc.csproj -r win-x64 -c Release -o Build/Windows
+```
+
+See [How to build YAFC from sources](/Docs/HowToBuild.md) for more detail.
 
 ## Project features
 - Works with any combination of mods for Factorio 2.0+. The most recent version that supports Factorio 1.1 is 0.9.1.
