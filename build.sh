@@ -7,7 +7,7 @@
 
 rm -rf Build
 
-VERSION=$(grep -oPm1 "(?<=<AssemblyVersion>)[^<]+" Yafc/Yafc.csproj)
+VERSION=$(sed -n 's:.*<AssemblyVersion>\([^<]*\)</AssemblyVersion>.*:\1:p' Yafc/Yafc.csproj | head -n 1)
 echo "Building YAFC version $VERSION..."
 
 dotnet publish Yafc/Yafc.csproj -r win-x64 -c Release -o Build/Windows
