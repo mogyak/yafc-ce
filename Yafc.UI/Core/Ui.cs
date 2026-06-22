@@ -120,11 +120,9 @@ public static partial class Ui {
                         inputSystem.MouseDown(evt.button.button);
                         break;
                     case SDL.SDL_EventType.SDL_MOUSEWHEEL:
+                        // Keep SDL's platform-adjusted wheel direction. Reversing SDL_MOUSEWHEEL_FLIPPED here
+                        // forces macOS natural scrolling back into Windows-style scrolling.
                         int y = -evt.wheel.y;
-
-                        if (evt.wheel.direction == (uint)SDL.SDL_MouseWheelDirection.SDL_MOUSEWHEEL_FLIPPED) {
-                            y = -y;
-                        }
 
                         inputSystem.MouseScroll(y);
                         break;
