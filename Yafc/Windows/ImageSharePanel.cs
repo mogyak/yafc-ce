@@ -37,7 +37,7 @@ public class ImageSharePanel : PseudoScreen {
         }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            && gui.BuildButton(copied ? LSs.CopiedToClipboard : LSs.CopyToClipboardWithShortcut.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_C)), active: !copied)) {
+            && gui.BuildButton(copied ? LSs.CopiedToClipboard : InputSystem.FormatPrimaryModifierText(LSs.CopyToClipboardWithShortcut.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_C))), active: !copied)) {
 
             WindowsClipboard.CopySurfaceToClipboard(surface);
             copied = true;

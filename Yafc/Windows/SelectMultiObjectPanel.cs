@@ -98,7 +98,7 @@ public static class SelectMultiObjectPanel {
         public override void Build(ImGui gui) {
             base.Build(gui);
             using (gui.EnterGroup(default, RectAllocator.Center)) {
-                gui.BuildText(LSs.SelectMultipleObjectsHint, TextBlockDisplayStyle.HintText);
+                gui.BuildText(InputSystem.FormatPrimaryModifierText(LSs.SelectMultipleObjectsHint), TextBlockDisplayStyle.HintText);
                 if (gui.BuildButton(LSs.Ok, active: options == null || options.SelectedQuality != null)) {
                     CloseWithResult(results);
                 }

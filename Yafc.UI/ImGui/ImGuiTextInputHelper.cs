@@ -228,7 +228,7 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
     }
 
     public bool KeyDown(SDL.SDL_Keysym key) {
-        bool ctrl = (key.mod & SDL.SDL_Keymod.KMOD_CTRL) != 0;
+        bool ctrl = InputSystem.IsPrimaryModifier(key.mod);
         bool shift = (key.mod & SDL.SDL_Keymod.KMOD_SHIFT) != 0;
 
         switch (key.scancode) {

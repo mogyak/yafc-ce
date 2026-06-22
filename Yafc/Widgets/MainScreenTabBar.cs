@@ -121,13 +121,13 @@ public class MainScreenTabBar {
             ProjectPageSettingsPanel.Show(page);
         }
         if (!isSecondary && !isActive) {
-            if (gui.BuildContextMenuButton(LSs.OpenSecondaryPage, LSs.ShortcutCtrlClick, Icon.Secondary)) {
+            if (gui.BuildContextMenuButton(LSs.OpenSecondaryPage, InputSystem.FormatPrimaryModifierText(LSs.ShortcutCtrlClick), Icon.Secondary)) {
                 _ = gui.CloseDropdown();
                 screen.SetSecondaryPage(page);
             }
         }
         else if (isSecondary) {
-            if (gui.BuildContextMenuButton(LSs.CloseSecondaryPage, LSs.ShortcutCtrlClick, Icon.Close)) {
+            if (gui.BuildContextMenuButton(LSs.CloseSecondaryPage, InputSystem.FormatPrimaryModifierText(LSs.ShortcutCtrlClick), Icon.Close)) {
                 _ = gui.CloseDropdown();
                 screen.SetSecondaryPage(null);
             }

@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using SDL2;
 
@@ -19,6 +21,7 @@ public interface IMouseFocus {
 
 public sealed class InputSystem {
     public static readonly InputSystem Instance = new InputSystem();
+    private static readonly bool useCommandAsPrimaryModifier = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
     private InputSystem() { }
 
@@ -74,8 +77,21 @@ public sealed class InputSystem {
         return previousFocus;
     }
 
-    public bool control => (keyMod & SDL.SDL_Keymod.KMOD_CTRL) != 0;
+    public bool control => IsPrimaryModifier(keyMod);
     public bool shift => (keyMod & SDL.SDL_Keymod.KMOD_SHIFT) != 0;
+
+    public static bool IsPrimaryModifier(SDL.SDL_Keymod keyMod) {
+        SDL.SDL_Keymod modifier = useCommandAsPrimaryModifier ? SDL.SDL_Keymod.KMOD_GUI : SDL.SDL_Keymod.KMOD_CTRL;
+        return (keyMod & modifier) != 0;
+    }
+
+    public static string FormatPrimaryShortcut(string key, bool shift = false) => useCommandAsPrimaryModifier
+        ? $"Cmd+{(shift ? "Shift+" : "")}{key}"
+        : $"Ctrl+{(shift ? "Shift+" : "")}{key}";
+
+    public static string FormatPrimaryModifierText(string text) => useCommandAsPrimaryModifier
+        ? text.Replace("Ctrl", "Cmd", StringComparison.Ordinal).Replace("ctrl", "cmd", StringComparison.Ordinal)
+        : text;
 
     internal void KeyDown(SDL.SDL_Keysym key) {
         keyMod = key.mod;
