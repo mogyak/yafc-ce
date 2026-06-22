@@ -84,7 +84,7 @@ public class ProductionSummaryView : ProjectPageView<ProductionSummary> {
                     BuildButtons(gui, 1.5f, subgroup);
                 }
                 else {
-                    if (gui.BuildTextInput(subgroup.name, out string newText, LSs.LegacySummaryGroupNameHint, delayed: true)) {
+                    if (gui.BuildTextInput(subgroup.name, out string newText, LSs.LegacySummaryGroupNameHint, delayed: true, trimWhitespace: true)) {
                         subgroup.RecordUndo().name = newText;
                     }
                 }

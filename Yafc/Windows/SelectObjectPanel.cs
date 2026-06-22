@@ -136,7 +136,7 @@ public abstract class SelectObjectPanel<TResult, TDisplay> : PseudoScreenWithRes
     }
 
     public override bool KeyDown(SDL.SDL_Keysym key) {
-        contents.SetTextInputFocus(searchBox, list.filter.query);
+        contents.SetTextInputFocus(searchBox, list.filter.query, trimWhitespace: true);
         return base.KeyDown(key);
     }
 }

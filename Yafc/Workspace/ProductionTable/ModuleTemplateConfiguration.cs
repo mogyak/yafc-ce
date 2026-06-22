@@ -81,7 +81,7 @@ public class ModuleTemplateConfiguration : PseudoScreen {
                 RefreshList();
             }
 
-            _ = gui.RemainingRow().BuildTextInput(newPageName, out newPageName, LSs.CreateNewTemplateHint, setKeyboardFocus: SetKeyboardFocus.OnFirstPanelDraw);
+            _ = gui.RemainingRow().BuildTextInput(newPageName, out newPageName, LSs.CreateNewTemplateHint, setKeyboardFocus: SetKeyboardFocus.OnFirstPanelDraw, trimWhitespace: true);
         }
     }
 }

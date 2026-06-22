@@ -449,7 +449,7 @@ public static class ImGuiUtils {
         newText = searchText ?? string.Empty;
 
         placeholder ??= LSs.SearchHint;
-        if (gui.BuildTextInput(newText, out string result, placeholder, Icon.Search, setKeyboardFocus: setKeyboardFocus)) {
+        if (gui.BuildTextInput(newText, out string result, placeholder, Icon.Search, setKeyboardFocus: setKeyboardFocus, trimWhitespace: true)) {
             newText = result;
             return true;
         }

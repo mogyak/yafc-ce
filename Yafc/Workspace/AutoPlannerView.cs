@@ -32,7 +32,7 @@ public class AutoPlannerView : ProjectPageView<AutoPlanner> {
             gui.BuildText(LSs.AutoPlannerWarning,
                 TextBlockDisplayStyle.ErrorText);
             gui.BuildText(LSs.AutoPlannerPageName);
-            _ = gui.BuildTextInput(pageName, out pageName, null);
+            _ = gui.BuildTextInput(pageName, out pageName, null, trimWhitespace: true);
             gui.AllocateSpacing(2f);
             gui.BuildText(LSs.AutoPlannerGoal);
             using (var grid = gui.EnterInlineGrid(3f)) {

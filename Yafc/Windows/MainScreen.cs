@@ -353,7 +353,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
     private void ShowSearch() {
         SetSearch(new SearchQuery(""));
         if (searchBoxRect != default) {
-            searchGui.SetTextInputFocus(searchBoxRect, "");
+            searchGui.SetTextInputFocus(searchBoxRect, "", trimWhitespace: true);
         }
     }
 
@@ -372,7 +372,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
         }
 
         if (searchBoxRect == default) {
-            gui.SetTextInputFocus(gui.lastRect, pageSearch.query);
+            gui.SetTextInputFocus(gui.lastRect, pageSearch.query, trimWhitespace: true);
         }
 
         searchBoxRect = gui.lastRect;
