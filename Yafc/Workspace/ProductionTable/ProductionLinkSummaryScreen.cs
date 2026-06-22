@@ -197,7 +197,7 @@ public class ProductionLinkSummaryScreen : PseudoScreen, IComparer<(RecipeRow ro
                 }
             }
 
-            if (gui.isBuilding) {
+            if (gui.isBuilding && total > 0f) {
                 var lastRect = gui.lastRect;
                 lastRect.Width *= Math.Abs(flow / total);
                 gui.DrawRectangle(lastRect, GetFlowColor(colorIndex));
