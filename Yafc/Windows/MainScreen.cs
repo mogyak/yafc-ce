@@ -575,7 +575,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
     public void ClosePseudoScreen(PseudoScreen screen) {
         _ = pseudoScreens.Remove(screen);
         if (pseudoScreens.Count > 0) {
-            pseudoScreens[^1].Activated();
+            pseudoScreens[0].Activated();
         }
 
         rootGui.Rebuild();
