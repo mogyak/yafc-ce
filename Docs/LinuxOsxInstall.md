@@ -114,12 +114,6 @@ To build all release targets, run:
 ./build.sh
 ```
 
-On macOS, the system `grep` may not support the `-P` option used by `build.sh`. If you hit `grep: invalid option -- P`, either run a single `dotnet publish` command directly, or install GNU grep and adjust the script to use `ggrep`:
-
-```sh
-brew install grep
-```
-
 You normally do not need to rebuild Lua manually. Only use the Lua build scripts when changing the bundled native Lua library; see [`lua/README.md`](/lua/README.md).
 
 ## Flathub

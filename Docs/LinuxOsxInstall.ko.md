@@ -114,12 +114,6 @@ dotnet publish Yafc/Yafc.csproj -r osx-x64 -c Release -o Build/OSX
 ./build.sh
 ```
 
-macOS의 기본 `grep`은 `build.sh`에서 사용하는 `-P` 옵션을 지원하지 않을 수 있습니다. `grep: invalid option -- P`가 나오면 단일 `dotnet publish` 명령을 직접 실행하거나, GNU grep을 설치하고 스크립트에서 `ggrep`을 사용하도록 조정하세요.
-
-```sh
-brew install grep
-```
-
 일반적으로 Lua를 직접 다시 빌드할 필요는 없습니다. 번들된 네이티브 Lua 라이브러리를 변경할 때만 Lua 빌드 스크립트를 사용하세요. 자세한 내용은 [`lua/README.md`](/lua/README.md)를 참고하세요.
 
 ## Flathub
