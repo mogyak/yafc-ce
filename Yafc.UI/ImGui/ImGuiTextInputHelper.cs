@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using SDL2;
+using Yafc.Core;
 
 namespace Yafc.UI;
 
@@ -12,13 +13,17 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
     private Rect rect;
     private readonly Stack<string> editHistory = new Stack<string>();
     private EditHistoryEvent lastEvent;
+    private bool trimWhitespace;
+    private string compositionText = "";
+    private int compositionCursor;
 
     private int caret, selectionAnchor;
     private bool caretVisible = true;
     private long nextCaretTimer;
 
-    public void SetFocus(Rect boundingRect, string setText) {
-        setText ??= "";
+    public void SetFocus(Rect boundingRect, string setText, bool trimWhitespace = false) {
+        this.trimWhitespace = trimWhitespace;
+        setText = NormalizeText(setText ?? "");
 
         if (boundingRect == prevRect) {
             text = prevText;
@@ -29,6 +34,7 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
             text = setText;
         }
 
+        ClearComposition();
         InputSystem.Instance.SetKeyboardFocus(this);
         rect = boundingRect;
         caret = selectionAnchor = setText.Length;
@@ -58,8 +64,10 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
         }
     }
 
-    public bool BuildTextInput(string? text, out string newText, string? placeholder, FontFile.FontSize fontSize, bool delayed, TextBoxDisplayStyle displayStyle) {
-        newText = text ?? "";
+    public bool BuildTextInput(string? text, out string newText, string? placeholder, FontFile.FontSize fontSize, bool delayed, TextBoxDisplayStyle displayStyle, bool trimWhitespace) {
+        this.trimWhitespace = trimWhitespace;
+        string inputText = NormalizeText(text ?? "");
+        newText = inputText;
         Rect textRect, realTextRect;
 
         using (gui.EnterGroup(displayStyle.Padding, RectAllocator.LeftRow)) {
@@ -74,10 +82,12 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
 
         var boundingRect = gui.lastRect;
         bool focused = rect == boundingRect;
+        string focusedText = focused ? GetTextWithComposition() : "";
 
         if (focused && this.text == null) {
-            this.text = text ?? "";
+            this.text = inputText;
             SetCaret(0, this.text.Length);
+            focusedText = GetTextWithComposition();
         }
 
         if (!gui.enableDrawing) {
@@ -91,9 +101,9 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
                 }
 
                 if (gui.ConsumeMouseDown(boundingRect)) {
-                    SetFocus(boundingRect, text ?? "");
+                    SetFocus(boundingRect, inputText, trimWhitespace);
                     GetTextParameters(this.text, textRect, fontSize, displayStyle.Alignment, out _, out _, out _, out realTextRect);
-                    SetCaret(FindCaretIndex(text, gui.mousePosition.X - realTextRect.X, fontSize, textRect.Width));
+                    SetCaret(FindCaretIndex(inputText, gui.mousePosition.X - realTextRect.X, fontSize, textRect.Width));
                 }
                 break;
             case ImGuiAction.MouseMove:
@@ -108,15 +118,15 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
                 string? textToBuild;
 
                 // Prefer internal edit buffer when focused so placeholder is hidden immediately
-                if (focused && !string.IsNullOrEmpty(this.text)) {
-                    textToBuild = this.text;
+                if (focused && !string.IsNullOrEmpty(focusedText)) {
+                    textToBuild = focusedText;
                 }
-                else if (string.IsNullOrEmpty(text)) {
+                else if (string.IsNullOrEmpty(inputText)) {
                     textToBuild = placeholder;
                     textColor = (SchemeColor)displayStyle.ColorGroup + 3;
                 }
                 else {
-                    textToBuild = text;
+                    textToBuild = inputText;
                 }
 
                 GetTextParameters(textToBuild, textRect, fontSize, displayStyle.Alignment, out TextCache? cachedText, out float scale, out float textWidth, out realTextRect);
@@ -126,9 +136,9 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
                 }
 
                 if (focused) {
-                    if (selectionAnchor != caret) {
-                        float left = GetCharacterPosition(Math.Min(selectionAnchor, caret), fontSize, textWidth) * scale;
-                        float right = GetCharacterPosition(Math.Max(selectionAnchor, caret), fontSize, textWidth) * scale;
+                    if (compositionText.Length == 0 && selectionAnchor != caret) {
+                        float left = GetCharacterPosition(focusedText, Math.Min(selectionAnchor, caret), fontSize, textWidth) * scale;
+                        float right = GetCharacterPosition(focusedText, Math.Max(selectionAnchor, caret), fontSize, textWidth) * scale;
                         gui.DrawRectangle(new Rect(left + realTextRect.X, realTextRect.Y, right - left, realTextRect.Height), SchemeColor.TextSelection);
                     }
                     else {
@@ -138,7 +148,7 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
                         }
                         gui.SetNextRebuild(nextCaretTimer);
                         if (caretVisible) {
-                            float caretPosition = GetCharacterPosition(caret, fontSize, textWidth) * scale;
+                            float caretPosition = GetCharacterPosition(focusedText, GetVisibleCaret(), fontSize, textWidth) * scale;
                             gui.DrawRectangle(new Rect(caretPosition + realTextRect.X - 0.05f, realTextRect.Y, 0.1f, realTextRect.Height), (SchemeColor)displayStyle.ColorGroup + 2);
                         }
                     }
@@ -150,7 +160,7 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
         }
 
         if (boundingRect == prevRect) {
-            bool changed = text != prevText;
+            bool changed = inputText != prevText;
 
             if (changed) {
                 newText = prevText;
@@ -162,8 +172,13 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
             return changed;
         }
 
-        if (focused && !delayed && this.text != text) {
-            newText = this.text;
+        if (focused && !delayed) {
+            string currentText = compositionText.Length == 0 ? this.text : GetTextWithComposition();
+            if (currentText == inputText) {
+                return false;
+            }
+
+            newText = currentText;
 
             return true;
         }
@@ -171,16 +186,18 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
         return false;
     }
 
-    private float GetCharacterPosition(int id, FontFile.FontSize fontSize, float max) {
+    private float GetCharacterPosition(string sourceText, int id, FontFile.FontSize fontSize, float max) {
+        id = MathUtils.Clamp(id, 0, sourceText.Length);
+
         if (id == 0) {
             return 0;
         }
 
-        if (id == text.Length) {
+        if (id == sourceText.Length) {
             return max;
         }
 
-        _ = SDL_ttf.TTF_SizeUNICODE(fontSize.handle, text[..id], out int w, out _);
+        _ = SDL_ttf.TTF_SizeUNICODE(fontSize.handle, sourceText[..id], out int w, out _);
 
         return gui.PixelsToUnits(w);
     }
@@ -233,7 +250,11 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
 
         switch (key.scancode) {
             case SDL.SDL_Scancode.SDL_SCANCODE_BACKSPACE:
-                if (selectionAnchor != caret) {
+                if (compositionText.Length > 0) {
+                    ClearComposition();
+                    gui.Rebuild();
+                }
+                else if (selectionAnchor != caret) {
                     DeleteSelected();
                 }
                 else if (caret > 0) {
@@ -265,7 +286,11 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
 
                 break;
             case SDL.SDL_Scancode.SDL_SCANCODE_DELETE:
-                if (selectionAnchor != caret) {
+                if (compositionText.Length > 0) {
+                    ClearComposition();
+                    gui.Rebuild();
+                }
+                else if (selectionAnchor != caret) {
                     DeleteSelected();
                 }
                 else if (caret < text.Length) {
@@ -277,6 +302,10 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
             case SDL.SDL_Scancode.SDL_SCANCODE_RETURN:
             case SDL.SDL_Scancode.SDL_SCANCODE_RETURN2:
             case SDL.SDL_Scancode.SDL_SCANCODE_KP_ENTER:
+                CommitComposition();
+                InputSystem.Instance.SetKeyboardFocus(null);
+
+                return false;
             case SDL.SDL_Scancode.SDL_SCANCODE_ESCAPE:
                 InputSystem.Instance.SetKeyboardFocus(null);
 
@@ -334,14 +363,29 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
             lastEvent = EditHistoryEvent.None;
         }
 
+        ClearComposition();
+        input = NormalizeText(input);
         AddEditHistory(EditHistoryEvent.Input);
         if (selectionAnchor != caret) {
             DeleteSelected();
         }
 
-        text = text.Insert(caret, input);
-        SetCaret(caret + input.Length);
+        string textBeforeCaret = NormalizeText(text[..caret] + input);
+        string newText = NormalizeText(textBeforeCaret + text[caret..]);
+        int newCaret = textBeforeCaret.Length;
+
+        text = newText;
+        SetCaret(newCaret);
         ResetCaret();
+
+        return true;
+    }
+
+    public bool TextEditing(string input, int start, int length) {
+        compositionText = NormalizeText(input);
+        compositionCursor = MathUtils.Clamp(start + length, 0, compositionText.Length);
+        ResetCaret();
+        gui.Rebuild();
 
         return true;
     }
@@ -350,13 +394,62 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
 
     public void FocusChanged(bool focused) {
         if (!focused) {
+            CommitComposition();
             prevRect = rect;
-            prevText = text;
+            prevText = GetCommittedText(text);
             rect = default;
             text = "";
             gui.Rebuild();
         }
     }
+
+    private string GetTextWithComposition() {
+        if (compositionText.Length == 0) {
+            return text;
+        }
+
+        int insertAt = Math.Min(selectionAnchor, caret);
+        string baseText = selectionAnchor == caret ? text : text.Remove(insertAt, Math.Abs(selectionAnchor - caret));
+
+        return NormalizeText(baseText.Insert(insertAt, compositionText));
+    }
+
+    private int GetVisibleCaret() {
+        if (compositionText.Length == 0) {
+            return caret;
+        }
+
+        return Math.Min(selectionAnchor, caret) + compositionCursor;
+    }
+
+    private void CommitComposition() {
+        if (compositionText.Length == 0) {
+            return;
+        }
+
+        AddEditHistory(EditHistoryEvent.Input);
+        int insertAt = Math.Min(selectionAnchor, caret);
+        string baseText = selectionAnchor == caret ? text : text.Remove(insertAt, Math.Abs(selectionAnchor - caret));
+        string textBeforeCaret = NormalizeText(baseText[..insertAt] + compositionText);
+        string newText = NormalizeText(textBeforeCaret + baseText[insertAt..]);
+        int newCaret = textBeforeCaret.Length;
+        text = newText;
+        caret = selectionAnchor = newCaret;
+        ClearComposition();
+    }
+
+    private void ClearComposition() {
+        compositionText = "";
+        compositionCursor = 0;
+    }
+
+    private string GetCommittedText(string value) {
+        value = NormalizeText(value);
+
+        return trimWhitespace ? value.Trim() : value;
+    }
+
+    private static string NormalizeText(string value) => TextUtils.NormalizeHangulCompatibilityJamo(value);
 
     // Fast operations with char* instead of strings
     [LibraryImport("SDL2_ttf.dll"), UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]

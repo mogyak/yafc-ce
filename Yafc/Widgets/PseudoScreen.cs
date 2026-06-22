@@ -78,6 +78,8 @@ public abstract class PseudoScreen : IKeyboardFocus {
 
     public virtual bool TextInput(string input) => true;
 
+    public virtual bool TextEditing(string input, int start, int length) => true;
+
     public virtual bool KeyUp(SDL.SDL_Keysym key) => true;
 
     public virtual void FocusChanged(bool focused) { }
