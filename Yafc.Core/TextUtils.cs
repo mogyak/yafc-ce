@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace Yafc.Core;
 
@@ -6,6 +6,18 @@ public static class TextUtils {
     public static string NormalizeHangulCompatibilityJamo(string value) {
         if (string.IsNullOrEmpty(value)) {
             return value;
+        }
+
+        bool containsCompatibilityJamo = false;
+        foreach (char character in value) {
+            if (character is >= '\u3131' and <= '\u3163') {
+                containsCompatibilityJamo = true;
+                break;
+            }
+        }
+
+        if (!containsCompatibilityJamo) {
+            return value.IsNormalized(NormalizationForm.FormC) ? value : value.Normalize(NormalizationForm.FormC);
         }
 
         StringBuilder result = new(value.Length);

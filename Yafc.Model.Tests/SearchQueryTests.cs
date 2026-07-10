@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Yafc.Core;
 using Xunit;
 
 namespace Yafc.Model.Tests;
@@ -46,5 +47,12 @@ public class SearchQueryTests {
         Assert.Equal(new[] { "안녕" }, query.tokens);
         Assert.True(query.Match("테스트 안녕 검색"));
         Assert.True(query.Match("테스트 ㅇㅏㄴㄴㅕㅇ 검색"));
+    }
+
+    [Fact]
+    public void Normalization_ReusesAlreadyNormalizedText() {
+        string text = "iron plate 한글";
+
+        Assert.Same(text, TextUtils.NormalizeHangulCompatibilityJamo(text));
     }
 }
