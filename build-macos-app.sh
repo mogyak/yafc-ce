@@ -2,7 +2,19 @@
 set -eu
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-APP_DIR="$ROOT_DIR/Build/YAFC-CE.app"
+BUILD_DIR="$ROOT_DIR/Build"
+FINAL_APP_DIR="$BUILD_DIR/YAFC-CE.app"
+VERSION=$(sed -n 's:.*<AssemblyVersion>\([^<]*\)</AssemblyVersion>.*:\1:p' "$ROOT_DIR/Yafc/Yafc.csproj" | head -n 1)
+
+case $(uname -m) in
+    arm64) RID=osx-arm64 ;;
+    x86_64) RID=osx-x64 ;;
+    *) echo "Unsupported macOS architecture: $(uname -m)" >&2; exit 1 ;;
+esac
+
+mkdir -p "$BUILD_DIR"
+STAGING_ROOT=$(mktemp -d "$BUILD_DIR/.YAFC-CE.app.XXXXXX")
+APP_DIR="$STAGING_ROOT/YAFC-CE.app"
 CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$APP_DIR/Contents/MacOS"
 INFO_PLIST="$APP_DIR/Contents/Info.plist"
@@ -10,14 +22,17 @@ PKG_INFO="$APP_DIR/Contents/PkgInfo"
 ICON_FILE="$APP_DIR/Contents/Resources/YAFC-CE.icns"
 ICONSET_DIR="$APP_DIR/Contents/Resources/YAFC-CE.iconset"
 BASE_ICON="$APP_DIR/Contents/Resources/YAFC-CE.png"
-VERSION=$(sed -n 's:.*<AssemblyVersion>\([^<]*\)</AssemblyVersion>.*:\1:p' "$ROOT_DIR/Yafc/Yafc.csproj" | head -n 1)
+
+cleanup() {
+    rm -rf "$STAGING_ROOT"
+}
+trap cleanup 0 HUP INT TERM
 
 echo "Building YAFC-CE.app version ${VERSION:-local}..."
 
-rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR" "$CONTENTS_DIR/Resources"
 
-dotnet publish "$ROOT_DIR/Yafc/Yafc.csproj" -r osx-arm64 -c Release --self-contained true -o "$MACOS_DIR" "$@"
+dotnet publish "$ROOT_DIR/Yafc/Yafc.csproj" -r "$RID" -c Release --self-contained true -o "$MACOS_DIR" "$@"
 
 find "$MACOS_DIR" -name "Yafc.I18n.Generator*" -delete
 find "$MACOS_DIR" -name "yafc*.log" -delete
@@ -78,5 +93,10 @@ find "$MACOS_DIR" -name "*.dylib" -exec chmod 755 {} +
 xattr -cr "$APP_DIR" 2>/dev/null || true
 codesign --force --deep --sign - "$APP_DIR"
 
-echo "Built $APP_DIR"
-echo "Open it with: open -n \"$APP_DIR\""
+rm -rf "$FINAL_APP_DIR"
+mv "$APP_DIR" "$FINAL_APP_DIR"
+trap - 0 HUP INT TERM
+rm -rf "$STAGING_ROOT"
+
+echo "Built $FINAL_APP_DIR"
+echo "Open it with: open -n \"$FINAL_APP_DIR\""
