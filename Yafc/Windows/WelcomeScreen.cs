@@ -324,7 +324,7 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
     private static string[] LoadTips() {
         string localizedTipsPath = Path.Combine("Data", "locale", Preferences.Instance.language, "Tips.txt");
         string tipsPath = File.Exists(localizedTipsPath) ? localizedTipsPath : Path.Combine("Data", "Tips.txt");
-        return [.. File.ReadAllLines(tipsPath).Select(InputSystem.FormatPrimaryModifierText)];
+        return File.ReadAllLines(tipsPath);
     }
 
     private void ProjectErrorMoreInfo(ImGui gui) {
