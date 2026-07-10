@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Serilog;
 using Yafc.I18n;
 using Yafc.Model;
