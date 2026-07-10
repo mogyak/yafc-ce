@@ -8,6 +8,18 @@ public static class TextUtils {
             return value;
         }
 
+        bool containsCompatibilityJamo = false;
+        foreach (char character in value) {
+            if (character is >= '\u3131' and <= '\u3163') {
+                containsCompatibilityJamo = true;
+                break;
+            }
+        }
+
+        if (!containsCompatibilityJamo) {
+            return value.IsNormalized(NormalizationForm.FormC) ? value : value.Normalize(NormalizationForm.FormC);
+        }
+
         StringBuilder result = new(value.Length);
 
         for (int i = 0; i < value.Length; i++) {
