@@ -13,7 +13,7 @@ public static class Program {
     internal static bool hasOverriddenFont { get; private set; }
 
     private static void Main(string[] args) {
-        SetWorkingDirectoryForAppBundle();
+        SetWorkingDirectoryForAppBundle(args);
 
         YafcLib.RegisterDefaultAnalysis();
 
@@ -79,7 +79,7 @@ public static class Program {
         }
     }
 
-    private static void SetWorkingDirectoryForAppBundle() {
+    private static void SetWorkingDirectoryForAppBundle(string[] args) {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
             return;
         }
@@ -88,6 +88,13 @@ public static class Program {
         string appBundleMacOsDirectory = $"{Path.DirectorySeparatorChar}Contents{Path.DirectorySeparatorChar}MacOS";
         if (baseDirectory.EndsWith(appBundleMacOsDirectory, StringComparison.Ordinal)
             && Directory.Exists(Path.Combine(baseDirectory, "Data"))) {
+            string launchDirectory = Environment.CurrentDirectory;
+            for (int i = 0; i < args.Length; i++) {
+                if (!args[i].StartsWith('-') && !Path.IsPathRooted(args[i])) {
+                    args[i] = Path.GetFullPath(args[i], launchDirectory);
+                }
+            }
+
             Directory.SetCurrentDirectory(baseDirectory);
         }
     }
