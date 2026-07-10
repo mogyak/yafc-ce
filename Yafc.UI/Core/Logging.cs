@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -16,8 +18,7 @@ public static class Logging {
     private static readonly Lazy<ILogger> logger = new(CreateLogger);
 
     static Logging() => configureLogger = configure => configure
-        // TODO: This file location must change if we introduce installers that place the executable in non-user-writable locations.
-        .WriteTo.File(new JsonFormatter(renderMessage: true), "yafc.log", rollingInterval: RollingInterval.Day, retainedFileTimeLimit: new TimeSpan(7, 0, 0, 0))
+        .WriteTo.File(new JsonFormatter(renderMessage: true), GetDefaultLogFile(), rollingInterval: RollingInterval.Day, retainedFileTimeLimit: new TimeSpan(7, 0, 0, 0))
         .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Information, standardErrorFromLevel: LogEventLevel.Error, outputTemplate: "{Message:lj}{NewLine}{Exception}")
         .Enrich.WithThreadId()
         .Enrich.With<StackTraceEnricher>()
@@ -50,6 +51,36 @@ public static class Logging {
         configureLogger(configuration);
 
         return configuration.CreateLogger();
+    }
+
+    private static string GetDefaultLogFile() {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+            if (!string.IsNullOrEmpty(home)) {
+                return Path.Combine(home, "Library", "Logs", "YAFC-CE", "yafc.log");
+            }
+        }
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+            if (!string.IsNullOrEmpty(localAppData)) {
+                return Path.Combine(localAppData, "YAFC-CE", "Logs", "yafc.log");
+            }
+        }
+
+        string xdgStateHome = Environment.GetEnvironmentVariable("XDG_STATE_HOME") ?? "";
+        if (!string.IsNullOrEmpty(xdgStateHome)) {
+            return Path.Combine(xdgStateHome, "yafc-ce", "yafc.log");
+        }
+
+        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (!string.IsNullOrEmpty(userProfile)) {
+            return Path.Combine(userProfile, ".local", "state", "yafc-ce", "yafc.log");
+        }
+
+        return "yafc.log";
     }
 
     /// <summary>
