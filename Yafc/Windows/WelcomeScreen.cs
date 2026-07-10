@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using SDL2;
 using Serilog;
@@ -58,7 +59,7 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
     private readonly ScrollArea recentProjectScroll;
     private readonly ScrollArea languageScroll;
     private string? errorMod;
-    private const string DefinesUpdateCommand = "/command helpers.write_file(\"Defines2.0.lua\", \"return \" .. serpent.line(defines), false)";
+    private const string DefinesUpdateCommand = "/command helpers.write_file(\"Defines2.1.lua\", \"return \" .. serpent.line(defines), false)";
     private DefinesUpdateState definesUpdateState;
     private string? errorMessage;
     private string? tip;
@@ -312,9 +313,9 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
             ];
 
             foreach (string root in factorioUserFolders) {
-                string file = Path.Combine(root, "script-output/Defines2.0.lua");
+                string file = Path.Combine(root, "script-output/Defines2.1.lua");
                 if (File.Exists(file)) {
-                    File.Move(file, Path.Combine(Environment.CurrentDirectory, "Data/Defines2.0.lua"), true);
+                    File.Move(file, Path.Combine(Environment.CurrentDirectory, "Data/Defines2.1.lua"), true);
                     return true;
                 }
             }
@@ -568,12 +569,18 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
             loading = true;
             rootGui.Rebuild();
 
-            await Ui.ExitMainThread();
-
             ErrorCollector collector = new ErrorCollector();
-            var project = FactorioDataSource.Parse(dataPath, modsPath, projectPath, expensive, netProduction, this, collector, Preferences.Instance.language, Preferences.Instance.useMostRecentSave);
+            var project = await Task.Run(() => FactorioDataSource.Parse(
+                dataPath,
+                modsPath,
+                projectPath,
+                expensive,
+                netProduction,
+                this,
+                collector,
+                Preferences.Instance.language,
+                Preferences.Instance.useMostRecentSave));
 
-            await Ui.EnterMainThread();
             logger.Information("Opening main screen");
             _ = new MainScreen(displayIndex, project);
 
@@ -586,11 +593,9 @@ public class WelcomeScreen : WindowUtility, IProgress<(string, string)>, IKeyboa
             logger.Information("GC: {TotalMemory}", GC.GetTotalMemory(false));
         }
         catch (InvalidOperationException ex) when (FactorioDataSource.CurrentLoadingMod == null && (ex.StackTrace?.Contains("MoveNext") ?? false)) {
-            await Ui.EnterMainThread();
             definesUpdateState = DefinesUpdateState.WaitingForCopy;
         }
         catch (Exception ex) {
-            await Ui.EnterMainThread();
             while (ex.InnerException != null) {
                 ex = ex.InnerException;
             }
