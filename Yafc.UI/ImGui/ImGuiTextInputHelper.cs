@@ -7,6 +7,8 @@ using Yafc.Core;
 namespace Yafc.UI;
 
 internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
+    public bool AcceptsTextInput => true;
+
     private string prevText = "";
     private Rect prevRect;
     private string text = "";
@@ -37,7 +39,7 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
         ClearComposition();
         InputSystem.Instance.SetKeyboardFocus(this);
         rect = boundingRect;
-        caret = selectionAnchor = setText.Length;
+        caret = selectionAnchor = text.Length;
     }
 
     private void GetTextParameters(string? textToBuild, Rect textRect, FontFile.FontSize fontSize, RectAlignment alignment,
@@ -307,6 +309,7 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
 
                 return false;
             case SDL.SDL_Scancode.SDL_SCANCODE_ESCAPE:
+                ClearComposition();
                 InputSystem.Instance.SetKeyboardFocus(null);
 
                 return false;
