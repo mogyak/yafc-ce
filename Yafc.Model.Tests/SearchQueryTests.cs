@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Yafc.Core;
 using Xunit;
+using Yafc.Core;
 
 namespace Yafc.Model.Tests;
 
