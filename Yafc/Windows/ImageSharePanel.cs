@@ -21,7 +21,7 @@ public class ImageSharePanel : PseudoScreen {
         header = name + " (" + surfaceData.w + "x" + surfaceData.h + ")";
         cleanupCallback = surface.Dispose;
 
-        _ = MainScreen.Instance.ShowPseudoScreen(this);
+        MainScreen.Instance.ShowPseudoScreen(this);
     }
 
     public override void Build(ImGui gui) {

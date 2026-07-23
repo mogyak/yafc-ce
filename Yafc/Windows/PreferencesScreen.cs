@@ -319,11 +319,11 @@ public class PreferencesScreen : PseudoScreen {
 
     public static void ShowProgression() {
         Instance.tabControl.SetActivePage(PROGRESSION_PAGE);
-        _ = MainScreen.Instance.ShowPseudoScreen(Instance);
+        MainScreen.Instance.ShowPseudoScreen(Instance);
     }
     public static void ShowGeneral() {
         Instance.tabControl.SetActivePage(GENERAL_PAGE);
-        _ = MainScreen.Instance.ShowPseudoScreen(Instance);
+        MainScreen.Instance.ShowPseudoScreen(Instance);
     }
-    public static void ShowPreviousState() => _ = MainScreen.Instance.ShowPseudoScreen(Instance);
+    public static void ShowPreviousState() => MainScreen.Instance.ShowPseudoScreen(Instance);
 }

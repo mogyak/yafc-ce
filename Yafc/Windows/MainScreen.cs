@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using SDL2;
 using Serilog;
+using Yafc.Core;
 using Yafc.I18n;
 using Yafc.Model;
 using Yafc.UI;
@@ -24,8 +25,6 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
     private readonly List<PseudoScreen> pseudoScreens = [];
     private readonly VirtualScrollList<ProjectPage> allPages;
     private readonly MainScreenTabBar tabBar;
-    private readonly FadeDrawer fadeDrawer = new FadeDrawer();
-
     private PseudoScreen? topScreen;
     public Project project { get; private set; }
     private ProjectPage? _activePage;
@@ -80,7 +79,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
         DataUtils.SetupForProject(project);
         this.project = project;
         if (project.justCreated) {
-            _ = ShowPseudoScreen(new MilestonesPanel());
+            ShowPseudoScreen(new MilestonesPanel());
             project.AssureFirstPage();
         }
 
@@ -134,7 +133,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
         var evt = gui.BuildButton(gui.lastRect, SchemeColor.PureBackground, SchemeColor.Grey, button: 0);
         if (evt) {
             if (gui.actionParameter == SDL.SDL_BUTTON_MIDDLE) {
-                ProjectPageSettingsPanel.Show(element);
+                ProjectPageSettingsPanel.ShowEdit(element);
                 dropDown?.Close();
             }
             else {
@@ -225,29 +224,23 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
     }
 
     protected override void BuildContent(ImGui gui) {
-        if (pseudoScreens.Count > 0) {
-            var top = pseudoScreens[0];
-            if (gui.isBuilding) {
-                gui.DrawRenderable(new Rect(default, size), fadeDrawer, SchemeColor.None);
-            }
+        BuildTabBar(gui);
+        BuildPage(gui);
 
-            if (top != topScreen) {
-                topScreen = top;
-                _ = InputSystem.Instance.SetDefaultKeyboardFocus(top);
+        if (pseudoScreens.Count > 0) {
+            if (topScreen != pseudoScreens[0]) {
+                topScreen = pseudoScreens[0];
+                InputSystem.Instance.SetDefaultKeyboardFocus(topScreen);
             }
-            top.Build(gui, size);
+            topScreen.Build(gui, size);
         }
-        else {
-            if (topScreen != null) {
-                project.undo.Resume();
-                _ = InputSystem.Instance.SetDefaultKeyboardFocus(this);
-                topScreen = null;
-                if (analysisUpdatePending) {
-                    ReRunAnalysis();
-                }
+        else if (topScreen != null) {
+            topScreen = null;
+            InputSystem.Instance.SetDefaultKeyboardFocus(this);
+            project.undo.Resume();
+            if (analysisUpdatePending) {
+                ReRunAnalysis();
             }
-            BuildTabBar(gui);
-            BuildPage(gui);
         }
     }
 
@@ -305,7 +298,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
             }
 
             if (pageSearchVisible && gui.isBuilding) {
-                var searchSize = searchGui.CalculateState(30, gui.pixelsPerUnit);
+                var searchSize = searchGui.CalculateState(30);
                 gui.DrawPanel(new Rect(pageVisibleSize.X - searchSize.X, usedHeaderSpace, searchSize.X, searchSize.Y), searchGui);
             }
         }
@@ -413,7 +406,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
 
         BuildSubHeader(gui, LSs.MenuHeaderTools);
         if (gui.BuildContextMenuButton(LSs.Milestones) && gui.CloseDropdown()) {
-            _ = ShowPseudoScreen(new MilestonesPanel());
+            ShowPseudoScreen(new MilestonesPanel());
         }
 
         if (gui.BuildContextMenuButton(LSs.Preferences) && gui.CloseDropdown()) {
@@ -425,7 +418,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
         }
 
         if (gui.BuildContextMenuButton(LSs.MenuLegacySummary) && gui.CloseDropdown()) {
-            ProjectPageSettingsPanel.Show(null, (name, icon) => Instance.AddProjectPage(name, icon, typeof(ProductionSummary), true, true));
+            ProjectPageSettingsPanel.ShowCreate(false, (name, icon, _) => Instance.AddProjectPage(name, icon, typeof(ProductionSummary), true, true));
         }
 
         if (gui.BuildContextMenuButton(LSs.Neie, InputSystem.FormatPrimaryShortcut(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_N))) && gui.CloseDropdown()) {
@@ -516,13 +509,13 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
         }
 
         saveConfirmationActive = true;
-        var (hasChoice, choice) = await MessageBox.Show(LSs.QuerySaveChanges, unsavedCount, LSs.Save, LSs.DontSave);
+        bool? choice = await MessageBox.Show(LSs.QuerySaveChanges, unsavedCount, LSs.Save, LSs.DontSave);
         saveConfirmationActive = false;
-        if (!hasChoice) {
+        if (choice == null) {
             return false;
         }
 
-        if (choice) {
+        if (choice.Value) {
             bool saved = await SaveProject();
             if (!saved) {
                 return false;
@@ -544,8 +537,8 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
             var release = JsonSerializer.Deserialize<GithubReleaseInfo>(result)!;
             string version = release.tag_name.StartsWith('v') ? release.tag_name[1..] : release.tag_name;
             if (new Version(version) > YafcLib.version) {
-                var (_, answer) = await MessageBox.Show(LSs.NewVersionAvailable, LSs.NewVersionNumber.L(release.tag_name), LSs.VisitReleasePage, LSs.Close);
-                if (answer) {
+                bool? answer = await MessageBox.Show(LSs.NewVersionAvailable, LSs.NewVersionNumber.L(release.tag_name), LSs.VisitReleasePage, LSs.Close);
+                if (answer.GetValueOrDefault()) {
                     Ui.VisitLink(release.html_url);
                 }
 
@@ -554,7 +547,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
             MessageBox.Show(LSs.NoNewerVersion, LSs.RunningLatestVersion, LSs.Ok);
         }
         catch (Exception) {
-            MessageBox.Show((hasAnswer, answer) => {
+            MessageBox.Show(answer => {
                 if (answer) {
                     Ui.VisitLink(AboutScreen.Github + "/releases");
                 }
@@ -567,16 +560,19 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
         ShowTooltip(objectTooltip);
     }
 
-    public bool ShowPseudoScreen(PseudoScreen screen) {
-        if (topScreen == null) {
-            Ui.DispatchInMainThread(x => fadeDrawer.CreateDownscaledImage(), null);
+    public void ShowPseudoScreen(PseudoScreen screen) {
+        if (!Ui.IsMainThread()) {
+            // If we're not on the UI thread, relocate there.
+            // This is hopefully unnecessary (the Rebuild calls were not protected), but there are too many calls to quickly validate.
+            Ui.DispatchInMainThread(x => ShowPseudoScreen((PseudoScreen)x!), screen);
+            return;
         }
+
         project.undo.Suspend();
         screen.Rebuild();
         pseudoScreens.Insert(0, screen);
         screen.Open();
         rootGui.Rebuild();
-        return true;
     }
 
     public void ClosePseudoScreen(PseudoScreen screen) {
@@ -739,42 +735,6 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
     public bool KeyUp(SDL.SDL_Keysym key) => true;
 
     public void FocusChanged(bool focused) { }
-
-    private class FadeDrawer : IRenderable {
-        private SDL.SDL_Rect srcRect;
-        private TextureHandle blurredFade;
-
-        public void CreateDownscaledImage() {
-            nint renderer = Instance.surface!.renderer; // null-forgiving: surface has been set earlier in the render loop.
-            blurredFade = blurredFade.Destroy();
-            var texture = Instance.surface.BeginRenderToTexture(out var size);
-            Instance.MainRender();
-            Instance.surface.EndRenderToTexture();
-            for (int i = 0; i < 2; i++) {
-                SDL.SDL_Rect halfSize = new SDL.SDL_Rect() { w = size.w / 2, h = size.h / 2 };
-                var halfTexture = Instance.surface.CreateTexture(SDL.SDL_PIXELFORMAT_RGBA8888, (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, halfSize.w, halfSize.h);
-                _ = SDL.SDL_SetRenderTarget(renderer, halfTexture.handle);
-                var bgColor = SchemeColor.PureBackground.ToSdlColor();
-                _ = SDL.SDL_SetRenderDrawColor(renderer, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
-                _ = SDL.SDL_RenderClear(renderer);
-                _ = SDL.SDL_SetTextureBlendMode(texture.handle, SDL.SDL_BlendMode.SDL_BLENDMODE_BLEND);
-                _ = SDL.SDL_SetTextureAlphaMod(texture.handle, 120);
-                _ = SDL.SDL_RenderCopy(renderer, texture.handle, ref size, ref halfSize);
-                _ = texture.Destroy();
-                texture = halfTexture;
-                size = halfSize;
-            }
-            _ = SDL.SDL_SetRenderTarget(renderer, IntPtr.Zero);
-            srcRect = size;
-            blurredFade = texture;
-        }
-
-        public void Render(DrawingSurface surface, SDL.SDL_Rect position, SDL.SDL_Color color) {
-            if (blurredFade.valid) {
-                _ = SDL.SDL_RenderCopy(surface.renderer, blurredFade.handle, ref srcRect, ref position);
-            }
-        }
-    }
 
     public void Report((string, string) value) => logger.Information("Status: {primary}, {secondary}", value.Item1, value.Item2); // TODO
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Yafc.Core;
 using Yafc.I18n;
 using Yafc.Model;
 using Yafc.UI;
@@ -405,7 +406,7 @@ public class NeverEnoughItemsPanel : PseudoScreen, IComparer<NeverEnoughItemsPan
             return;
         }
         Instance.SetItem(goods);
-        _ = MainScreen.Instance.ShowPseudoScreen(Instance);
+        MainScreen.Instance.ShowPseudoScreen(Instance);
     }
     int IComparer<RecipeEntry>.Compare(RecipeEntry x, RecipeEntry y) {
         if (x.entryStatus != y.entryStatus) {

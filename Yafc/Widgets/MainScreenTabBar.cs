@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using SDL2;
+using Yafc.Core;
 using Yafc.I18n;
 using Yafc.Model;
 using Yafc.UI;
@@ -101,7 +102,7 @@ public class MainScreenTabBar {
         if (changePage > 0) {
             if (changePage == 1) {
                 if (changePageTo == screen.activePage) {
-                    ProjectPageSettingsPanel.Show(changePageTo);
+                    ProjectPageSettingsPanel.ShowEdit(changePageTo!);
                 }
                 else {
                     screen.SetActivePage(changePageTo);
@@ -118,7 +119,7 @@ public class MainScreenTabBar {
         bool isActive = screen.activePage == page;
         if (gui.BuildContextMenuButton(LSs.EditPageProperties, icon: Icon.Edit)) {
             _ = gui.CloseDropdown();
-            ProjectPageSettingsPanel.Show(page);
+            ProjectPageSettingsPanel.ShowEdit(page);
         }
         if (!isSecondary && !isActive) {
             if (gui.BuildContextMenuButton(LSs.OpenSecondaryPage, InputSystem.FormatPrimaryModifierText(LSs.ShortcutCtrlClick), Icon.Secondary)) {
@@ -152,7 +153,7 @@ public class MainScreenTabBar {
         switch (gui.action) {
             case ImGuiAction.Build:
                 gui.DrawPanel(rect, tabs);
-                var measuredSize = tabs.CalculateState(0f, gui.pixelsPerUnit);
+                var measuredSize = tabs.CalculateState(0f);
                 maxScroll = MathF.Max(0f, measuredSize.X - rect.Width);
                 break;
             case ImGuiAction.MouseScroll:

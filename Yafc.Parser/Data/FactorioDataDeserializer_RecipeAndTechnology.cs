@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Yafc.Core;
 using Yafc.I18n;
 using Yafc.Model;
-using Yafc.UI;
 
 namespace Yafc.Parser;
 
@@ -66,6 +66,8 @@ internal partial class FactorioDataDeserializer {
         if (table.Get("allowed_module_categories", out LuaTable? categories)) {
             recipe.allowedModuleCategories = [.. categories.ArrayElements<string>()];
         }
+
+        ReadRequiredSurfaceProperties(table, recipe);
 
         void tryReadCategories(object? maybeTable, Recipe recipe) {
             if (maybeTable is LuaTable categories) {

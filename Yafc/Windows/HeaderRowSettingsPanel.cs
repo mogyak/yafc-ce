@@ -31,7 +31,8 @@ public class HeaderRowSettingsPanel : PseudoScreen {
         }
     }
 
-    public static void Show(RecipeRow? row, Action<string?, FactorioObject?>? callback = null) => _ = MainScreen.Instance.ShowPseudoScreen(new HeaderRowSettingsPanel(row, callback));
+    public static void Show(RecipeRow? row, Action<string?, FactorioObject?>? callback = null)
+        => MainScreen.Instance.ShowPseudoScreen(new HeaderRowSettingsPanel(row, callback));
 
     public override void Build(ImGui gui) {
         gui.spacing = 3f;

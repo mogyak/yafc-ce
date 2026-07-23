@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Yafc.Core;
 
 namespace Yafc.UI;
 
@@ -36,7 +37,7 @@ public abstract class AttachedPanel {
             var rect = source.TranslateRect(sourceRect, gui);
 
             if (ShouldBuild(source, sourceRect, gui, rect)) {
-                var contentSize = contents.CalculateState(width, gui.pixelsPerUnit);
+                var contentSize = contents.CalculateState(width);
                 var position = CalculatePosition(gui, rect, contentSize);
                 Rect parentRect = new Rect(position, contentSize);
                 gui.DrawPanel(parentRect, contents);

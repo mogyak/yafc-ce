@@ -36,7 +36,7 @@ public class DependencyExplorer : PseudoScreen {
         this.current = current;
     }
 
-    public static void Show(FactorioObject target) => _ = MainScreen.Instance.ShowPseudoScreen(new DependencyExplorer(target));
+    public static void Show(FactorioObject target) => MainScreen.Instance.ShowPseudoScreen(new DependencyExplorer(target));
 
     private void DrawFactorioObject(ImGui gui, FactorioId id) {
         FactorioObject obj = Database.objects[id];

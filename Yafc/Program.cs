@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using Serilog;
+using Yafc.Core;
 using Yafc.I18n;
 using Yafc.Model;
 using Yafc.Parser;

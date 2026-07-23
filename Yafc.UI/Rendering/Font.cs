@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SDL2;
+using Yafc.Core;
 
 namespace Yafc.UI;
 

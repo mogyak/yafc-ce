@@ -4,9 +4,11 @@ using System.Linq;
 using System.Numerics;
 using SDL2;
 using Yafc.Blueprints;
+using Yafc.Core;
 using Yafc.I18n;
 using Yafc.Model;
 using Yafc.UI;
+using Yafc.Windows;
 
 namespace Yafc;
 
@@ -54,11 +56,15 @@ public class ProductionTableView : ProjectPageView<ProductionTable> {
             }
 
             if (row.warningFlags != 0) {
-                bool isError = row.warningFlags >= WarningFlags.EntityNotSpecified;
+                bool isWarning = row.warningFlags > WarningFlags.MaximumForMessage;
+                bool isError = row.warningFlags > WarningFlags.MaximumForWarning;
                 ButtonEvent evt;
 
                 if (isError) {
-                    evt = gui.BuildRedButton(Icon.Error, invertedColors: true);
+                    evt = gui.BuildIconButton(Icon.Error, SchemeColor.Background, SchemeColor.Error);
+                }
+                else if (isWarning) {
+                    evt = gui.BuildIconButton(Icon.Warning, SchemeColor.Background, SchemeColor.WarningAlt);
                 }
                 else {
                     using (gui.EnterGroup(ImGuiUtils.DefaultIconPadding)) {
@@ -74,6 +80,10 @@ public class ProductionTableView : ProjectPageView<ProductionTable> {
                             g.boxColor = SchemeColor.Error;
                             g.textColor = SchemeColor.ErrorText;
                         }
+                        else if (isWarning) {
+                            g.boxColor = SchemeColor.WarningAlt;
+                            g.textColor = SchemeColor.WarningText;
+                        }
                         foreach (var (flag, key) in WarningsMeaning) {
                             if ((row.warningFlags & flag) != 0) {
                                 g.BuildText(key, TextBlockDisplayStyle.WrappedText);
@@ -86,7 +96,7 @@ public class ProductionTableView : ProjectPageView<ProductionTable> {
                         PreferencesScreen.ShowGeneral();
                     }
                     else if (row.warningFlags.HasFlag(WarningFlags.UselessQuality)) {
-                        _ = MainScreen.Instance.ShowPseudoScreen(new MilestonesPanel());
+                        MainScreen.Instance.ShowPseudoScreen(new MilestonesPanel());
                     }
                     else if (row.warningFlags.HasFlag(WarningFlags.ExcessProductivity)) {
                         PreferencesScreen.ShowProgression();
@@ -134,6 +144,13 @@ public class ProductionTableView : ProjectPageView<ProductionTable> {
                     gui.ShowDropDown(delegate (ImGui imgui) {
                         DrawRecipeTagSelect(imgui, recipe);
 
+                        if (recipe.subgroup != null && imgui.BuildSurfaceButton(recipe.subgroup.effectiveSurface, LSs.ProductionTableCraftHeader)
+                            && imgui.CloseDropdown()) {
+
+                            SelectSurfaceScreen.Show(recipe.subgroup.effectiveSurface, LSs.ClearChildSurfaceSelection,
+                                result => recipe.subgroup.RecordUndo().selectedSurface = result);
+                        }
+
                         if (recipe.recipe == null && imgui.BuildButton(LSs.EditPageProperties) && imgui.CloseDropdown()) {
                             HeaderRowSettingsPanel.Show(recipe);
                         }
@@ -179,7 +196,7 @@ public class ProductionTableView : ProjectPageView<ProductionTable> {
                             view._focusManager.CancelFocus(recipe);
                             _ = recipe.owner.RecordUndo().recipes.Remove(recipe);
                         }
-                    });
+                    }, 25);
                     break;
                 case Click.Right when recipe.subgroup?.expanded ?? false: // With expanded subgroup
                     unpackNestedTable();
@@ -227,8 +244,9 @@ public class ProductionTableView : ProjectPageView<ProductionTable> {
         }
 
         public override void BuildMenu(ImGui gui) {
-            BuildRecipeButtons(gui, view.model);
+            var model = view.model;
 
+            BuildRecipeButtons(gui, model);
             gui.BuildText(LSs.ProductionTableExportToBlueprint, TextBlockDisplayStyle.WrappedText);
             using (gui.EnterRow()) {
                 gui.BuildText(LSs.ExportBlueprintAmountPer);
@@ -247,12 +265,12 @@ public class ProductionTableView : ProjectPageView<ProductionTable> {
             }
 
             if (gui.BuildButton(LSs.ProductionTableRemoveZeroBuildingRecipes) && gui.CloseDropdown()) {
-                RemoveZeroRecipes(view.model);
+                RemoveZeroRecipes(model);
             }
 
             if (gui.BuildRedButton(LSs.ProductionTableClearRecipes) && gui.CloseDropdown()) {
                 view._focusManager.Clear();
-                view.model.RecordUndo().recipes.Clear();
+                model.RecordUndo().recipes.Clear();
             }
 
             if (InputSystem.Instance.control && gui.BuildButton(LSs.ProductionTableAddAllRecipes) && gui.CloseDropdown()) {
@@ -271,10 +289,10 @@ public class ProductionTableView : ProjectPageView<ProductionTable> {
 
                     foreach (var quality in Database.qualities.all) {
                         foreach (var product in recipe.products) {
-                            view.RebuildIf(view.model.CreateLink(product.goods.With(quality)));
+                            view.RebuildIf(model.CreateLink(product.goods.With(quality)));
                         }
 
-                        view.model.AddRecipe(recipe.With(quality), DefaultVariantOrdering);
+                        model.AddRecipe(recipe.With(quality), DefaultVariantOrdering);
                     }
 goodsHaveNoProduction:;
                 }
@@ -886,7 +904,10 @@ goodsHaveNoProduction:;
 
     public override float CalculateWidth() => flatHierarchyBuilder.width;
 
-    public static void CreateProductionSheet() => ProjectPageSettingsPanel.Show(null, (name, icon) => MainScreen.Instance.AddProjectPage(name, icon, typeof(ProductionTable), true, true));
+    public static void CreateProductionSheet() => ProjectPageSettingsPanel.ShowCreate(true, (name, icon, surface) => {
+        var page = MainScreen.Instance.AddProjectPage(name, icon, typeof(ProductionTable), true, true);
+        ((ProductionTable)(page.content)).selectedSurface = surface;
+    });
 
     private static readonly IComparer<Goods> DefaultVariantOrdering =
         new DataUtils.FactorioObjectComparer<Goods>((x, y) => (y.ApproximateFlow() / MathF.Abs(y.Cost())).CompareTo(x.ApproximateFlow() / MathF.Abs(x.Cost())));
@@ -955,7 +976,9 @@ goodsHaveNoProduction:;
             IObjectWithQuality<RecipeOrTechnology> qualityRecipe = rec.With(goods.quality);
             RebuildIf(context.CreateLink(goods));
 
-            if (!context.Contains(qualityRecipe) || (await MessageBox.Show(LSs.ProductionTableAlertRecipeExists, LSs.ProductionTableQueryAddCopy.L(rec.locName), LSs.ProductionTableAddCopy, LSs.Cancel)).choice) {
+            if (!context.Contains(qualityRecipe) || (await MessageBox.Show(LSs.ProductionTableAlertRecipeExists,
+                LSs.ProductionTableQueryAddCopy.L(rec.locName), LSs.ProductionTableAddCopy, LSs.Cancel)).GetValueOrDefault()) {
+
                 context.AddRecipe(qualityRecipe, DefaultVariantOrdering, selectedFuel, spentFuel);
             }
         }
@@ -1587,22 +1610,25 @@ goodsHaveNoProduction:;
 
     private static readonly Dictionary<WarningFlags, LocalizableString0> WarningsMeaning = new()
     {
-        {WarningFlags.DeadlockCandidate, LSs.WarningDescriptionDeadlockCandidate},
-        {WarningFlags.OverproductionRequired, LSs.WarningDescriptionOverproductionRequired},
-        {WarningFlags.EntityNotSpecified, LSs.WarningDescriptionEntityNotSpecified},
-        {WarningFlags.FuelNotSpecified, LSs.WarningDescriptionFuelNotSpecified},
-        {WarningFlags.FuelWithTemperatureNotLinked, LSs.WarningDescriptionFluidWithTemperature},
-        {WarningFlags.FuelTemperatureExceedsMaximum, LSs.WarningDescriptionFluidTooHot},
-        {WarningFlags.FuelDoesNotProvideEnergy, LSs.WarningDescriptionFuelDoesNotProvideEnergy},
-        {WarningFlags.FuelUsageInputLimited, LSs.WarningDescriptionHasMaxFuelConsumption},
-        {WarningFlags.TemperatureForIngredientNotMatch, LSs.WarningDescriptionIngredientTemperatureRange},
-        {WarningFlags.ReactorsNeighborsFromPrefs, LSs.WarningDescriptionAssumesReactorFormation},
         {WarningFlags.AssumesNauvisSolarRatio, LSs.WarningDescriptionAssumesNauvisSolar},
-        {WarningFlags.ExceedsBuiltCount, LSs.WarningDescriptionNeedsMoreBuildings},
+        {WarningFlags.ReactorsNeighborsFromPrefs, LSs.WarningDescriptionAssumesReactorFormation},
+        {WarningFlags.FuelUsageInputLimited, LSs.WarningDescriptionHasMaxFuelConsumption},
         {WarningFlags.AsteroidCollectionNotModelled, LSs.WarningDescriptionAsteroidCollectors},
         {WarningFlags.AssumesFulgoraAndModel, LSs.WarningDescriptionAssumesFulgoranLightning},
         {WarningFlags.UselessQuality, LSs.WarningDescriptionUselessQuality},
         {WarningFlags.ExcessProductivity, LSs.WarningDescriptionExcessProductivityBonus},
+        {WarningFlags.RecipeNotAllowed, LSs.WarningDescriptionRecipeNotAllowed},
+        {WarningFlags.EntityNotAllowed, LSs.WarningDescriptionEntityNotAllowed},
+
+        {WarningFlags.EntityNotSpecified, LSs.WarningDescriptionEntityNotSpecified},
+        {WarningFlags.FuelNotSpecified, LSs.WarningDescriptionFuelNotSpecified},
+        {WarningFlags.FuelTemperatureExceedsMaximum, LSs.WarningDescriptionFluidTooHot},
+        {WarningFlags.FuelDoesNotProvideEnergy, LSs.WarningDescriptionFuelDoesNotProvideEnergy},
+        {WarningFlags.FuelWithTemperatureNotLinked, LSs.WarningDescriptionFluidWithTemperature},
+
+        {WarningFlags.DeadlockCandidate, LSs.WarningDescriptionDeadlockCandidate},
+        {WarningFlags.OverproductionRequired, LSs.WarningDescriptionOverproductionRequired},
+        {WarningFlags.ExceedsBuiltCount, LSs.WarningDescriptionNeedsMoreBuildings},
     };
 
     private static readonly (Icon icon, SchemeColor color)[] tagIcons = [

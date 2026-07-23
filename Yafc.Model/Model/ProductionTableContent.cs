@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Yafc.Core;
 using Yafc.I18n;
-using Yafc.UI;
 
 namespace Yafc.Model;
 
@@ -991,6 +990,16 @@ public class ProductionLink(ProductionTable group, IObjectWithQuality<Goods> goo
         }
         return false;
     }
+}
+
+[Serializable]
+public sealed record SelectedSurface {
+    public Location? planet { get; set; }
+    public Surface? platform { get; set; }
+    /// <summary>
+    /// Gets the appropriate object for testing <see cref="Recipe.craftingSurfaces"/> and <see cref="Entity.buildSurfaces"/>.
+    /// </summary>
+    public Location? CraftingSurface => platform ?? planet;
 }
 
 /// <summary>

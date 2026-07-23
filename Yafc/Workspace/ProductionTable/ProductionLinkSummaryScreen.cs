@@ -287,7 +287,7 @@ public class ProductionLinkSummaryScreen : PseudoScreen, IComparer<(RecipeRow ro
     }
 
 
-    public static void Show(ProductionLink link) => _ = MainScreen.Instance.ShowPseudoScreen(new ProductionLinkSummaryScreen(link));
+    public static void Show(ProductionLink link) => MainScreen.Instance.ShowPseudoScreen(new ProductionLinkSummaryScreen(link));
 
     public int Compare((RecipeRow row, float flow) x, (RecipeRow row, float flow) y) => y.flow.CompareTo(x.flow);
 }

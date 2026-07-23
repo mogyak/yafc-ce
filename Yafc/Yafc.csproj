@@ -3,8 +3,8 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
-    <AssemblyVersion>2.19.0</AssemblyVersion>
-    <FileVersion>2.19.0</FileVersion>
+    <AssemblyVersion>2.20.0</AssemblyVersion>
+    <FileVersion>2.20.0</FileVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>image.ico</ApplicationIcon>
     <Nullable>enable</Nullable>
@@ -16,19 +16,19 @@
     <None Update="image.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <ContentWithTargetPath Include="lib\windows\*" Condition="('$(RuntimeIdentifier)' == 'win-x64') Or ('$(OS)' == 'Windows_NT')">
+    <ContentWithTargetPath Include="lib\windows\*" Condition="'$(RuntimeIdentifier)' == 'win-x64' Or ('$(RuntimeIdentifier)' == '' And $([MSBuild]::IsOSPlatform('Windows')))">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="lib\osx\*" Condition="'$(RuntimeIdentifier)' == 'osx-x64'">
+    <ContentWithTargetPath Include="lib\osx\*" Condition="'$(RuntimeIdentifier)' == 'osx-x64' Or ('$(RuntimeIdentifier)' == '' And $([MSBuild]::IsOSPlatform('OSX')) And '$(SystemArchitecture)' == 'x64')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="lib\osx-arm64\*" Condition="'$(RuntimeIdentifier)' == 'osx-arm64'">
+    <ContentWithTargetPath Include="lib\osx-arm64\*" Condition="'$(RuntimeIdentifier)' == 'osx-arm64' Or ('$(RuntimeIdentifier)' == '' And $([MSBuild]::IsOSPlatform('OSX')) And '$(SystemArchitecture)' == 'arm64')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="lib\linux\*" Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+    <ContentWithTargetPath Include="lib\linux\*" Condition="'$(RuntimeIdentifier)' == 'linux-x64' Or ('$(RuntimeIdentifier)' == '' And $([MSBuild]::IsOSPlatform('Linux')))">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </ContentWithTargetPath>

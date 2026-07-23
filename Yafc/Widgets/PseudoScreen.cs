@@ -7,6 +7,7 @@ namespace Yafc;
 
 // Pseudo screen is not an actual screen, it is a panel shown in the middle of the main screen
 public abstract class PseudoScreen : IKeyboardFocus {
+    public readonly ImGui backdrop;
     public readonly ImGui contents;
     protected readonly float width;
     protected bool opened;
@@ -17,21 +18,36 @@ public abstract class PseudoScreen : IKeyboardFocus {
 
     protected PseudoScreen(float width = 40f) {
         this.width = width;
+        backdrop = new ImGui(BuildBackdrop, default);
         contents = new ImGui(Build, ImGuiUtils.DefaultScreenPadding) {
-            boxColor = SchemeColor.PureBackground
+            boxColor = SchemeColor.PureBackground,
+            boxShadow = RectangleBorder.Full
         };
     }
 
     public virtual void Open() => opened = true;
     public abstract void Build(ImGui gui);
 
+    private Vector2 screenSize;
+
+    protected void BuildBackdrop(ImGui gui) {
+        if (gui.isBuilding) {
+            gui.DrawRenderable(new Rect(default, screenSize), new AlphaRect(200), SchemeColor.PureBackground);
+        }
+    }
+
     public void Build(ImGui gui, Vector2 screenSize) {
         if (gui.isBuilding) {
-            var contentSize = contents.CalculateState(width, gui.pixelsPerUnit);
+            if (screenSize != this.screenSize) {
+                this.screenSize = screenSize;
+                backdrop.Rebuild();
+            }
+            gui.DrawPanel(new Rect(default, screenSize), backdrop);
+
+            var contentSize = contents.CalculateState(width);
             var position = (screenSize - contentSize) / 2;
-            Rect rect = new Rect(position, contentSize);
-            gui.DrawPanel(rect, contents);
-            gui.DrawRectangle(rect, SchemeColor.None, RectangleBorder.Full);
+            var contentsRect = new Rect(position, contentSize);
+            gui.DrawPanel(contentsRect, contents);
         }
     }
 
@@ -61,7 +77,10 @@ public abstract class PseudoScreen : IKeyboardFocus {
         MainScreen.Instance.ClosePseudoScreen(this);
     }
 
-    public void Rebuild() => contents.Rebuild();
+    public void Rebuild() {
+        backdrop.Rebuild();
+        contents.Rebuild();
+    }
 
     public virtual bool KeyDown(SDL.SDL_Keysym key) {
         if (key.scancode == SDL.SDL_Scancode.SDL_SCANCODE_ESCAPE) {
@@ -92,19 +111,14 @@ public abstract class PseudoScreen : IKeyboardFocus {
 /// <typeparam name="T">The type of result the panel can generate.</typeparam>
 public abstract class PseudoScreenWithResult<T>(float width = 40f) : PseudoScreen(width) {
     /// <summary>
-    /// If not <see langword="null"/>, called after the panel is closed. The parameters are <c>hasResult</c> and <c>result</c>: If a result is available, the first parameter will
-    /// be <see langword="true"/>, and the second parameter will have the result. The result may be <see langword="null"/>, depending on the kind of panel that was displayed.
+    /// If not <see langword="null"/>, called with the selected value after the panel is confirmed. Not called if the panel is cancelled.
+    /// If you need to react to cancel, use <see cref="PseudoScreen.cleanupCallback"/>, which is called unconditionally after this returns
+    /// (if applicable).
     /// </summary>
-    /// <remarks>Note that the <see cref="PseudoScreen.cleanupCallback"/> will be called after invoking this callback.</remarks>
-    protected Action<bool, T?>? completionCallback;
+    protected Action<T>? completionCallback;
 
-    protected void CloseWithResult(T? result) {
-        completionCallback?.Invoke(true, result);
-        base.Close();
-    }
-
-    protected override void Close() {
-        completionCallback?.Invoke(false, default);
+    protected void CloseWithResult(T result) {
+        completionCallback?.Invoke(result);
         base.Close();
     }
 }

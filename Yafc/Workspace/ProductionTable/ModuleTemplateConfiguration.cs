@@ -16,7 +16,7 @@ public class ModuleTemplateConfiguration : PseudoScreen {
 
     public static void Show() {
         Instance.RefreshList();
-        _ = MainScreen.Instance.ShowPseudoScreen(Instance);
+        MainScreen.Instance.ShowPseudoScreen(Instance);
     }
 
     private void RefreshList() {
