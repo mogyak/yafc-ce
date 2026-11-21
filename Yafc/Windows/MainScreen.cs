@@ -90,7 +90,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
             _ = page.SolvePage();
         }
 
-        SetActivePage(project.FindPage(project.displayPages[0]));
+        SetActivePage(project.displayPages.Count > 0 ? project.FindPage(project.displayPages[0]) : null);
         project.metaInfoChanged += ProjectOnMetaInfoChanged;
         project.settings.changed += ProjectSettingsChanged;
         project.saveStateChanged += ProjectSaveStateChanged;
@@ -260,7 +260,7 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
             }
 
             gui.allocator = RectAllocator.RightRow;
-            if (gui.BuildButton(Icon.DropDown, SchemeColor.None, SchemeColor.Grey).WithTooltip(gui, InputSystem.FormatPrimaryModifierText(LSs.ListAndSearchAll.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_F)))) || showSearchAll) {
+            if (gui.BuildButton(Icon.Search, SchemeColor.None, SchemeColor.Grey).WithTooltip(gui, InputSystem.FormatPrimaryModifierText(LSs.ListAndSearchAll.L(ImGuiUtils.ScanToString(SDL.SDL_Scancode.SDL_SCANCODE_F)))) || showSearchAll) {
                 showSearchAll = false;
                 updatePageList();
                 ShowDropDown(gui, gui.lastRect, missingPagesDropdown, new Padding(0f, 0f, 0f, 0.5f), 30f);
@@ -666,8 +666,10 @@ public partial class MainScreen : WindowMain, IKeyboardFocus, IProgress<(string,
     }
 
     private async Task<bool> SaveProjectAs() {
+        // Use the Documents folder as the default directory. The exact folder will vary based on OS.
+        string defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         string? projectPath = await new FilesystemScreen(LSs.SaveProjectWindowTitle, LSs.SaveProjectWindowHeader, LSs.Save,
-            string.IsNullOrEmpty(project.attachedFileName) ? null : Path.GetDirectoryName(project.attachedFileName),
+            string.IsNullOrEmpty(project.attachedFileName) ? defaultDirectory : Path.GetDirectoryName(project.attachedFileName),
             FilesystemScreen.Mode.SelectOrCreateFile, LSs.DefaultFileName, this, null, "yafc", LSs.EnterProjectName);
         if (projectPath != null) {
             project.Save(projectPath);

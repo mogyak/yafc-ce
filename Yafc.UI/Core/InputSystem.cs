@@ -106,8 +106,17 @@ public sealed class InputSystem {
         ? text.Replace("Ctrl", "Cmd", StringComparison.Ordinal).Replace("ctrl", "cmd", StringComparison.Ordinal)
         : text;
 
+    private void SetKeyMod(SDL.SDL_Keymod mod) {
+        bool changed = control != IsPrimaryModifier(mod) || shift != ((mod & SDL.SDL_Keymod.KMOD_SHIFT) != 0);
+        keyMod = mod;
+
+        if (changed) {
+            mouseOverWindow?.ModifierKeysChanged();
+        }
+    }
+
     internal void KeyDown(SDL.SDL_Keysym key) {
-        keyMod = key.mod;
+        SetKeyMod(key.mod);
 
         if (activeKeyboardFocus == null || !activeKeyboardFocus.KeyDown(key)) {
             _ = (defaultKeyboardFocus?.KeyDown(key));
@@ -115,7 +124,7 @@ public sealed class InputSystem {
     }
 
     internal void KeyUp(SDL.SDL_Keysym key) {
-        keyMod = key.mod;
+        SetKeyMod(key.mod);
 
         if (activeKeyboardFocus == null || !activeKeyboardFocus.KeyUp(key)) {
             _ = (defaultKeyboardFocus?.KeyUp(key));
@@ -187,6 +196,20 @@ public sealed class InputSystem {
             if (activeMouseFocus != null && !activeMouseFocus.FilterPanel(hoveringPanel)) {
                 SetMouseFocus(null);
             }
+        }
+
+        // Mouse button 4 (X1) is commonly used for backwards navigation.
+        // If this button is used, we do an early out to avoid treating it as a "normal" mouse click.
+        if (button == SDL.SDL_BUTTON_X1) {
+            (defaultKeyboardFocus as INavigationTarget)?.navigationHelper.NavigateBack();
+            return;
+        }
+
+        // Mouse button 5 (X2) is commonly used for forwards navigation.
+        // If this button is used, we do an early out to avoid treating it as a "normal" mouse click.
+        if (button == SDL.SDL_BUTTON_X2) {
+            (defaultKeyboardFocus as INavigationTarget)?.navigationHelper.NavigateForward();
+            return;
         }
 
         mouseDownPosition = mousePosition;

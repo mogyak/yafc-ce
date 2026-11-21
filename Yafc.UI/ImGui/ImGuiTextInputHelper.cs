@@ -117,18 +117,12 @@ internal partial class ImGuiTextInputHelper(ImGui gui) : IKeyboardFocus {
                 break;
             case ImGuiAction.Build:
                 SchemeColor textColor = (SchemeColor)displayStyle.ColorGroup + 2;
-                string? textToBuild;
 
-                // Prefer internal edit buffer when focused so placeholder is hidden immediately
-                if (focused && !string.IsNullOrEmpty(focusedText)) {
-                    textToBuild = focusedText;
-                }
-                else if (string.IsNullOrEmpty(inputText)) {
+                // Use the internal edit buffer if focused
+                string? textToBuild = focused ? focusedText : inputText;
+                if (string.IsNullOrEmpty(textToBuild)) {
                     textToBuild = placeholder;
                     textColor = (SchemeColor)displayStyle.ColorGroup + 3;
-                }
-                else {
-                    textToBuild = inputText;
                 }
 
                 GetTextParameters(textToBuild, textRect, fontSize, displayStyle.Alignment, out TextCache? cachedText, out float scale, out float textWidth, out realTextRect);

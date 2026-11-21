@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using SDL2;
 using Yafc.Core;
 using Yafc.I18n;
 using Yafc.Model;
@@ -7,13 +8,19 @@ using Yafc.UI;
 
 namespace Yafc;
 
-public class NeverEnoughItemsPanel : PseudoScreen, IComparer<NeverEnoughItemsPanel.RecipeEntry> {
+public class NeverEnoughItemsPanel : PseudoScreen, INavigationTarget, IComparer<NeverEnoughItemsPanel.RecipeEntry> {
     private static readonly NeverEnoughItemsPanel Instance = new NeverEnoughItemsPanel();
     private Goods current = null!; // null-forgiving: Set by Show.
     private Goods? changing;
     private float currentFlow;
     private EntryStatus showRecipesRange = EntryStatus.Normal;
+
+    // Recent is the list of Goods shown at the top of the window, and does not contain duplicates.
     private readonly List<Goods> recent = [];
+
+    private readonly NavigationHelper<Goods> localNavigationHelper;
+    public INavigationHelper navigationHelper => localNavigationHelper;
+
     private bool atCurrentMilestones;
 
     private readonly ScrollArea productionList;
@@ -65,6 +72,7 @@ public class NeverEnoughItemsPanel : PseudoScreen, IComparer<NeverEnoughItemsPan
     private RecipeEntry[] usages = [];
 
     private NeverEnoughItemsPanel() : base(76f) {
+        localNavigationHelper = new NavigationHelper<Goods>(SetItem);
         productionList = new ScrollArea(40f, BuildItemProduction, new Padding(0.5f));
         usageList = new ScrollArea(40f, BuildItemUsages, new Padding(0.5f));
     }
@@ -115,6 +123,17 @@ public class NeverEnoughItemsPanel : PseudoScreen, IComparer<NeverEnoughItemsPan
         usageList.Rebuild();
     }
 
+    /// <summary>
+    /// Handle KeyDown event. 
+    /// Forward to the NavigationHelper for navigation key handling.
+    /// </summary>
+    public override bool KeyDown(SDL.SDL_Keysym key) {
+        if (localNavigationHelper.HandleKeyDownNavigation(key)) {
+            return true;
+        }
+        return base.KeyDown(key);
+    }
+
     private void DrawIngredients(ImGui gui, Recipe recipe) {
         if (recipe.ingredients.Length > 8) {
             DrawTooManyThings(gui, recipe.ingredients, 8);
@@ -123,7 +142,7 @@ public class NeverEnoughItemsPanel : PseudoScreen, IComparer<NeverEnoughItemsPan
         foreach (var ingredient in recipe.ingredients) {
             if (gui.BuildFactorioObjectWithAmount(ingredient.goods, ingredient.amount, ButtonDisplayStyle.NeieSmall) == Click.Left) {
                 if (ingredient.variants != null) {
-                    gui.ShowDropDown(imGui => imGui.BuildInlineObjectListAndButton(ingredient.variants, SetItem, new(LSs.NeieAcceptedVariants)));
+                    gui.ShowDropDown(imGui => imGui.BuildInlineObjectListAndButton(ingredient.variants, localNavigationHelper.NavigateTo, new(LSs.NeieAcceptedVariants)));
                 }
                 else {
                     changing = ingredient.goods;
@@ -157,7 +176,7 @@ public class NeverEnoughItemsPanel : PseudoScreen, IComparer<NeverEnoughItemsPan
 
     private void CheckChanging() {
         if (changing != null) {
-            SetItem(changing);
+            localNavigationHelper.NavigateTo(changing);
             changing = null;
         }
     }
@@ -373,7 +392,7 @@ public class NeverEnoughItemsPanel : PseudoScreen, IComparer<NeverEnoughItemsPan
         }
 
         if (gui.BuildFactorioObjectButtonBackground(gui.lastRect, current, SchemeColor.Grey) == Click.Left) {
-            SelectSingleObjectPanel.Select(Database.goods.explorable, new(LSs.SelectItem), SetItem);
+            SelectSingleObjectPanel.Select(Database.goods.explorable, new(LSs.SelectItem), localNavigationHelper.NavigateTo);
         }
 
         using (var split = gui.EnterHorizontalSplit(2)) {
@@ -405,7 +424,7 @@ public class NeverEnoughItemsPanel : PseudoScreen, IComparer<NeverEnoughItemsPan
             Instance.changing = goods;
             return;
         }
-        Instance.SetItem(goods);
+        Instance.localNavigationHelper.NavigateTo(goods);
         MainScreen.Instance.ShowPseudoScreen(Instance);
     }
     int IComparer<RecipeEntry>.Compare(RecipeEntry x, RecipeEntry y) {

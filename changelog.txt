@@ -22,8 +22,51 @@
 Version:
 Date:
     Features:
-        - Allow planet selection for production tables, and complain if the selected recipe or entity can't be used there.
+        - Update the column menu and "List and search all" button icons so they are no longer mistaken for sorting.
+        - Update the default save location for new projects to the Documents folder instead of the YAFC folder.
+        - Update the cost analysis to use the default modules of buildings that only accept their own module category (like Py farms), and the Pyanodon TURD upgrades that you select.
+        - Update the cost analysis to price each recipe with its fastest building unlocked at the current milestones, using that building's speed, size, energy and pollution together. If none is unlocked, the slowest building is used. Buildings with -100% speed, like Py farms, use their slowest module if none of their modules is unlocked yet. Pumps, generators, reactors and agricultural towers use their real speed too, and an agricultural tower's size includes its field. Mining still assumes speed 1.
+        - Add a search box to the Milestones panel and the Milestone editor, to quickly find milestones in long lists.
+        - Hold Ctrl in a recipe tooltip to see how its cost is broken down, including the building and fuel it is priced with, and also Shift to see that breakdown at the current milestones.
+        - Update an open tooltip when Ctrl or Shift is pressed or released, such as the object's type name that Ctrl shows, instead of only when the mouse moves to another object.
     Fixes:
+        - Support prototype-stage JSON and string exports in mods. YAFC suppresses script-output file writes while continuing to load the mod.
+        - Cost analysis: mining recipes in Factorio 2.0 were always penalized as if the resource was extremely rare. Mined resources are now considerably cheaper.
+        - Honor mod-list.json version selections regardless of mod discovery order, preventing incompatible mod versions from being mixed.
+        - Fix a crash on load when a zipped mod lists the same file or folder more than once.
+        - Draw the missing column dividers before Recipe and after Entity in the production table header.
+        - Load zipped mods that use backslashes in their paths when the zip was made on Linux or macOS. Yafc reported these mods as not found.
+        - Never fill buildings with Pyanodon TURD modules as default modules. They would fill every farm once pypostprocessing makes them craftable for Yafc.
+        - Cost analysis: recipes are no longer capped at 1000 MJ of energy per craft or a crafter size of 15, and recipes without polluting crafters no longer get a pollution cost.
+        - Resources added to data.script_enabled can be mined again when Yafc does not know where they spawn, such as the Space Exploration resources.
+        - Cost analysis: a recipe's size, energy and pollution no longer depend on the order of its buildings' names. They now come from the buildings unlocked at the current milestones, without the character or Pyanodon TURD variant buildings.
+        - Cost analysis: recipes whose buildings burn a single fuel no longer pay for their energy twice, once through the fuel and once as a flat energy cost.
+        - While Yafc loads mods, they can no longer use io, os, coroutine, dofile, loadfile or the full package and debug libraries, which Factorio does not offer either. load() and loadstring() only accept text chunks, like in Factorio.
+        - Mods can find the files loaded with require in package.loaded, and require returns true for files that return nothing, like in Factorio.
+        - GUI: Deleting the last character in TextInput no longer has a delay.
+        - Fix a crash when loading a project that has no pages, or only hidden pages.
+        - Never Enough Items: recipes that cost analysis uses are no longer sometimes listed below recipes it does not use.
+        - Cost analysis: the cost of a recipe whose buildings burn a single fuel now includes that fuel, so its cost and waste are no longer too low.
+        - Factorio 2.1: run each file loaded with require() only once for the whole data stage, like Factorio does. This fixes loading PyBlock. Pyanodon mods now need pypostprocessing 3.1.8 or newer.
+    Internal changes:
+        - Enable diagnostic "CA1061 Do not hide base class methods" as error
+        - Enable diagnostic "IDE0052 Remove unread private members" as warning
+        - Check IDE0052 in the CI format step, so unread private members fail the build check.
+        - Ignore .vscode/launch.json, as launch configurations contain personal paths and settings.
+        - Document the distinction between project settings and preferences.
+----------------------------------------------------------------------------------------------------------------------
+Version: 2.21.0
+Date: 25 October 2026
+    Features:
+        - Allow planet selection for production tables, and complain if the selected recipe or entity can't be used there.
+        - Allow for Mouse button X1 (AKA Mouse Button 4/Back) to navigate backwards in DependencyExplorer and ProductionLinkSummaryScreen.
+        - Allow backwards navigation with Backspace and Mouse button 4 in NeverEnoughItems.
+        - Add forward navigation with Mouse Button 5 (AKA X2) and Shift + Backspace to DependencyExplorer, NeverEnoughItems and ProductionLinkSummaryScreen.
+    Fixes:
+        - A mod's recommended dependencies are now correctly treated as optional
+        - Define LuaHelpers.stage (added in 2.1) as "prototype"
+        - Support for Factorio 2.1.20: item fuel_category renamed to fuel_categories (#705)
+        - Don't reuse cached mod data after toggling the "expensive recipes" or "net production" options.
 ----------------------------------------------------------------------------------------------------------------------
 Version: 2.20.0
 Date: 17 July 2026

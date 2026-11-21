@@ -147,15 +147,19 @@ internal partial class LuaContext : IDisposable {
     private readonly List<(string mod, string name)> fullChunkNames = [];
     private readonly Dictionary<(string mod, string name), int> required = [];
     private readonly Dictionary<(string mod, string name), byte[]> modFixes = [];
+    private readonly Version gameVersion;
 
     private static readonly ILogger logger = Logging.GetLogger<LuaContext>();
 
     public LuaContext(Version gameVersion) {
+        this.gameVersion = gameVersion;
+
         L = luaL_newstate();
         _ = luaL_openlibs(L);
 
         var helpers = NewTable();
         helpers["game_version"] = gameVersion.ToString(3);
+        helpers["stage"] = "prototype";
         SetGlobal("helpers", helpers);
         SetGlobal("yafc", NewTable());
 
@@ -195,6 +199,8 @@ internal partial class LuaContext : IDisposable {
         neverCollect.Add(traceback);
         lua_pushcclosure(L, Marshal.GetFunctionPointerForDelegate(traceback), 0);
         tracebackReg = luaL_ref(L, REGISTRY);
+
+        RegisterExportHelpers();
 
         if (Directory.Exists("Data/Mod-fixes/")) {
             foreach (string file in Directory.EnumerateFiles("Data/Mod-fixes/", "*.lua")) {
@@ -569,7 +575,7 @@ internal partial class LuaContext : IDisposable {
         else if (mod == "*") {
             byte[] localFile = File.ReadAllBytes("Data/" + fileExt);
             int result = Exec(localFile, "*", file);
-            GetReg(result);
+            PushRequireResult(result);
             return 1;
         }
         // TODO: Does Factorio's require check intermediate directories, in addition to current and mod-root?
@@ -591,7 +597,7 @@ internal partial class LuaContext : IDisposable {
         }
 
         if (required.TryGetValue(requiredFile, out int value)) {
-            GetReg(value);
+            PushRequireResult(value);
             return 1;
         }
 
@@ -605,7 +611,8 @@ internal partial class LuaContext : IDisposable {
             result = RunModFix(requiredFile.mod, requiredFile.path, result);
 
             required[requiredFile] = result;
-            GetReg(result);
+            RecordLoaded(requiredFile.mod, requiredFile.path, result);
+            PushRequireResult(result);
         }
         else {
             logger.Error("LUA require failed: mod {mod}, file {file}", mod, file);
@@ -622,6 +629,65 @@ internal partial class LuaContext : IDisposable {
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Forgets the files loaded by require, so they run again, and empties <c>package.loaded</c>. Factorio 2.0 does this before each mod's stage file.
+    /// </summary>
+    private void ClearRequireCache() {
+        required.Clear();
+
+        using LuaStackChecker checker = new(this, popExtraValues: 1);
+
+        if (PushPackage()) {
+            _ = lua_pushstring(L, "loaded");
+            lua_createtable(L, 0, 0);
+            lua_rawset(L, -3);
+        }
+    }
+
+    /// <summary>
+    /// Pushes the global <c>package</c>, and returns whether it is a table. A mod could have replaced it with something else.
+    /// </summary>
+    private bool PushPackage() {
+        _ = lua_getglobal(L, "package");
+
+        return lua_type(L, -1) == Type.LUA_TTABLE;
+    }
+
+    /// <summary>
+    /// Pushes the result of a required file, or <see langword="true"/> if it returned nothing, like Factorio's <c>require</c>.
+    /// </summary>
+    private void PushRequireResult(int result) {
+        GetReg(result);
+
+        if (lua_type(L, -1) == Type.LUA_TNIL) {
+            Pop(1);
+            lua_pushboolean(L, 1);
+        }
+    }
+
+    /// <summary>
+    /// Stores the result of a mod file in <c>package.loaded["__mod__/path"]</c>, or <see langword="true"/> if it returned nothing, like Factorio does.
+    /// Factorio's <c>require</c> does not read this table, and neither does ours.
+    /// </summary>
+    private void RecordLoaded(string mod, string path, int result) {
+        using LuaStackChecker checker = new(this, popExtraValues: 1);
+
+        if (!PushPackage()) { // 1
+            return;
+        }
+
+        _ = lua_pushstring(L, "loaded");
+        lua_rawget(L, -2); // 2
+
+        if (lua_type(L, -1) == Type.LUA_TTABLE) {
+            _ = lua_pushstring(L, $"__{mod}__/{path}"); // 3
+            PushRequireResult(result); // 4
+            lua_rawset(L, -3); // 2
+        }
+
+        Pop(1); // 1
     }
 
     protected readonly List<object> neverCollect = []; // references callbacks that could be called from native code to not be garbage collected
@@ -702,7 +768,10 @@ internal partial class LuaContext : IDisposable {
         string header = LSs.ProgressExecutingModAtDataStage.L(fileName);
 
         foreach (string mod in modorder) {
-            required.Clear();
+            if (this.gameVersion < FactorioDataDeserializer.v2_1) {
+                ClearRequireCache();
+            }
+
             FactorioDataSource.CurrentLoadingMod = mod;
             progress.Report((header, mod));
             byte[] bytes = FactorioDataSource.ReadModFile(mod, fileName);
@@ -712,8 +781,9 @@ internal partial class LuaContext : IDisposable {
             }
 
             logger.Information("Executing file {Filename}", mod + "/" + fileName);
-            _ = Exec(bytes, mod, fileName);
-            RunModFix(mod, fileName);
+            int result = Exec(bytes, mod, fileName);
+            result = RunModFix(mod, fileName, result);
+            RecordLoaded(mod, fileName, result);
         }
     }
 
