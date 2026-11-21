@@ -3,6 +3,10 @@ using static Yafc.Parser.FactorioDataSource;
 
 namespace Yafc.Parser.Tests;
 
+[CollectionDefinition(nameof(FactorioDataSourceCollection), DisableParallelization = true)]
+public class FactorioDataSourceCollection { }
+
+[Collection(nameof(FactorioDataSourceCollection))]
 public class ModSelectionTests {
     [Theory]
     [InlineData(true)]
