@@ -340,13 +340,21 @@ public static partial class FactorioDataSource {
 
                 if (mod == null) {
                     missingMod ??= name;
-                    logger.Error("Mod not found: {ModName}.", name);
+                    logger.Error("No compatible installation found for enabled mod {ModName}.", name);
                 }
 
                 mod?.ParseDependencies();
             }
 
             if (missingMod != null) {
+                CurrentLoadingMod = missingMod;
+                var installedTargets = allFoundMods.Where(mod => mod.name == missingMod)
+                    .Select(mod => mod.parsedFactorioVersion).Distinct().Order().ToArray();
+                if (installedTargets.Length > 0) {
+                    string targets = string.Join(", ", installedTargets.Select(version => version.ToString()));
+                    logger.Error("Installed {ModName} targets Factorio {Targets}, but the selected game data is {GameVersion}.", missingMod, targets, factorioVersion);
+                    throw new NotSupportedException(LSs.ModFactorioVersionMismatch.L(missingMod, targets, factorioVersion));
+                }
                 throw new NotSupportedException(LSs.ModNotFoundTryInFactorio.L(missingMod));
             }
 

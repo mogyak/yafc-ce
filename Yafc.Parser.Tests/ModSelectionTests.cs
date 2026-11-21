@@ -5,6 +5,32 @@ namespace Yafc.Parser.Tests;
 
 public class ModSelectionTests {
     [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void DistinguishesIncompatibleModFromMissingMod(bool installed) {
+        var root = Directory.CreateTempSubdirectory();
+        try {
+            File.WriteAllText(Path.Combine(root.FullName, "mod-list.json"), """{"mods":[{"name":"test-mod","enabled":true}]}""");
+            File.WriteAllText(Path.Combine(root.CreateSubdirectory("base").FullName, "info.json"), """{"name":"base","version":"2.1.24"}""");
+            File.WriteAllText(Path.Combine(root.CreateSubdirectory("core").FullName, "info.json"), """{"name":"core","version":"2.1.24"}""");
+            if (installed) {
+                File.WriteAllText(Path.Combine(root.CreateSubdirectory("mod").FullName, "info.json"), """{"name":"test-mod","version":"0.1.0","factorio_version":"2.0"}""");
+            }
+
+            var error = Assert.Throws<NotSupportedException>(() => Parse(root.FullName, root.FullName, "", false, false,
+                new Progress<(string, string)>(), new(), "en", false, false));
+            string expected = installed ? I18n.LSs.ModFactorioVersionMismatch.L("test-mod", "2.0", new Version("2.1.24"))
+                : I18n.LSs.ModNotFoundTryInFactorio.L("test-mod");
+            Assert.Equal(expected, error.Message);
+            Assert.Equal("test-mod", CurrentLoadingMod);
+        }
+        finally {
+            CurrentLoadingMod = null;
+            root.Delete(true);
+        }
+    }
+
+    [Theory]
     [InlineData("2.1.1", "2.0.5", "2.0.5")]
     [InlineData("2.0.5", "2.1.1", "2.0.5")]
     [InlineData("2.1.1", "2.0.5", null)]
